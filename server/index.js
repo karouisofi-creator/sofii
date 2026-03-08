@@ -13,10 +13,6 @@ import adminUsersRoutes from './routes/admin/users.js'
 import adminLogsRoutes from './routes/admin/logs.js'
 import { initStore } from './store/index.js'
 import { validateJwtSecret } from './utils/security.js'
-import express from 'express'
-import cors from 'cors'
-import dataRoutes from './routes/data.js'   // <-- import data route
-import authRoutes from './routes/auth.js'
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -41,7 +37,6 @@ app.use(express.json({ limit: '10kb' }))
 app.use('/api/auth', authRoutes)
 app.use('/api/admin/users', adminUsersRoutes)
 app.use('/api/admin/logs', adminLogsRoutes)
-app.use('/api/data', dataRoutes)
 
 app.get('/', (req, res) => {
   res.json({
