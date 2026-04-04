@@ -1,0 +1,35 @@
+# DataFlow Assurance Tasks
+
+## Sprints Overview (02 Mars → Fin Mai)
+- [x] **Module A** — Authentification & Gestion des Rôles (Completed by User)
+- [ ] **Module B** — Connexion Base de Données SSMS
+  - [ ] Configure `mssql` connection pool in backend
+  - [ ] Expose dynamic parameterized queries execution via API
+  - [ ] Implement query error handling & pagination
+- [ ] **Module E** — Batch Processing
+  - [ ] Setup initial catalog structure for Claims queries
+  - [ ] Backend: Parameter validation before SSMS execution
+  - [ ] Frontend: Dynamic forms for criteria based on batch selected
+  - [ ] Frontend: Results table with exporting capabilities
+- [ ] **Module D** — Interface Moderne & Filtres Intelligents
+  - [ ] Implement Universal Search / Filter UI
+  - [ ] Data grid with multi-criteria search, sorting, column toggling
+- [x] **Module F** — Demandes de Reporting
+  - [x] Backend: Create in-memory `tickets` store (Title, Description, Type, Perimeter, Format, Urgency, Status, User ID)
+  - [x] Backend: Ticketing API endpoints (GET /tickets, POST /tickets, PATCH /tickets/:id)
+  - [x] Frontend UI: Reporting layout and table for users/admins
+  - [x] Frontend UI: Ticket creation modal/form
+  - [x] Frontend UI: Ticket detail view and status update tracking
+- [ ] **Module C** — Dashboard Analytique en Temps Réel
+  - [ ] Backend endpoints for KPIs (Claims/day, validation rates)
+  - [ ] Frontend dashboard with Chart.js (or similar) integrated
+- [ ] **Module G** — Export des Données
+  - [ ] Expose CSV (UTF-8 BOM) export functions
+  - [ ] Excel export integration (SheetJS)
+  - [ ] Power BI REST API Integration
+- [x] **Module H** — Chatbot IA
+  - [x] Handle OpenRouter API requests securely without exposing key to frontend
+  - [x] Create `/api/chat` endpoint targeting `anthropic/claude-3.5-sonnet`
+  - [x] Implement a system prompt giving Claude context about Claims and Medicaments
+  - [x] Build a Floating Chatbot UI component in React layout
+  - [x] Add conversation history state to the Chatbot UI
