@@ -11,6 +11,8 @@ import rateLimit from 'express-rate-limit'
 import authRoutes from './routes/auth.js'
 import adminUsersRoutes from './routes/admin/users.js'
 import adminLogsRoutes from './routes/admin/logs.js'
+import ticketsRoutes from './routes/tickets.js'
+import chatRoutes from './routes/chat.js'
 import { initStore } from './store/index.js'
 import { validateJwtSecret } from './utils/security.js'
 
@@ -37,6 +39,8 @@ app.use(express.json({ limit: '10kb' }))
 app.use('/api/auth', authRoutes)
 app.use('/api/admin/users', adminUsersRoutes)
 app.use('/api/admin/logs', adminLogsRoutes)
+app.use('/api/tickets', ticketsRoutes)
+app.use('/api/chat', chatRoutes)
 
 app.get('/', (req, res) => {
   res.json({
