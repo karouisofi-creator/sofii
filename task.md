@@ -2,17 +2,10 @@
 
 ## Sprints Overview (02 Mars → Fin Mai)
 - [x] **Module A** — Authentification & Gestion des Rôles (Completed by User)
-<<<<<<< HEAD
 - [x] **Module B** — Connexion Base de Données SSMS
   - [x] Configure `mssql` connection pool in backend
   - [x] Expose dynamic parameterized queries execution via API
   - [x] Implement query error handling & pagination
-=======
-- [ ] **Module B** — Connexion Base de Données SSMS
-  - [ ] Configure `mssql` connection pool in backend
-  - [ ] Expose dynamic parameterized queries execution via API
-  - [ ] Implement query error handling & pagination
->>>>>>> b385096c56d9c16716bdf65aa09115e5ba4b8c8f
 - [ ] **Module E** — Batch Processing
   - [ ] Setup initial catalog structure for Claims queries
   - [ ] Backend: Parameter validation before SSMS execution

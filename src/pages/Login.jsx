@@ -19,11 +19,7 @@ export default function Login() {
 
     try {
       await login(email, password)
-<<<<<<< HEAD
       navigate('/', { replace: true })
-=======
-      navigate(from, { replace: true })
->>>>>>> b385096c56d9c16716bdf65aa09115e5ba4b8c8f
     } catch (err) {
       setError(err.message || 'Erreur de connexion')
     } finally {
