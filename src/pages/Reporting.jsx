@@ -18,11 +18,15 @@ export default function Reporting() {
   }
 
   const handleUpdateStatus = async (id, newStatus) => {
+<<<<<<< HEAD
     const update = { status: newStatus }
     if (newStatus === 'Résolu' && user) {
       update.solvedBy = user.email // or user.fullName if you prefer
     }
     await updateTicket(id, update)
+=======
+    await updateTicket(id, { status: newStatus })
+>>>>>>> b385096c56d9c16716bdf65aa09115e5ba4b8c8f
   }
 
   const getStatusColor = (status) => {

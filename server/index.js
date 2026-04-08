@@ -13,8 +13,11 @@ import adminUsersRoutes from './routes/admin/users.js'
 import adminLogsRoutes from './routes/admin/logs.js'
 import ticketsRoutes from './routes/tickets.js'
 import chatRoutes from './routes/chat.js'
+<<<<<<< HEAD
 import queryRoutes from './routes/query.js'
 import adminReportsRoutes from './routes/admin/reports.js'
+=======
+>>>>>>> b385096c56d9c16716bdf65aa09115e5ba4b8c8f
 import { initStore } from './store/index.js'
 import { validateJwtSecret } from './utils/security.js'
 
@@ -43,9 +46,12 @@ app.use('/api/admin/users', adminUsersRoutes)
 app.use('/api/admin/logs', adminLogsRoutes)
 app.use('/api/tickets', ticketsRoutes)
 app.use('/api/chat', chatRoutes)
+<<<<<<< HEAD
 app.use('/api/query', queryRoutes)
 app.use('/api/admin/reports', adminReportsRoutes)
 app.use('/api/reports', adminReportsRoutes)
+=======
+>>>>>>> b385096c56d9c16716bdf65aa09115e5ba4b8c8f
 
 app.get('/', (req, res) => {
   res.json({

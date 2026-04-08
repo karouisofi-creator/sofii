@@ -1,11 +1,16 @@
+<<<<<<< HEAD
 
 import { Router } from 'express'
 import fetch from 'node-fetch'
+=======
+import { Router } from 'express'
+>>>>>>> b385096c56d9c16716bdf65aa09115e5ba4b8c8f
 import jwt from 'jsonwebtoken'
 import rateLimit from 'express-rate-limit'
 import { authMiddleware } from '../middleware/auth.js'
 import { getStore } from '../store/index.js'
 import { verifyPassword, sanitizeString, isValidEmail } from '../utils/security.js'
+<<<<<<< HEAD
 import { ACTIONS } from '../utils/activityLogger.js'
 
 const router = Router()
@@ -20,16 +25,30 @@ router.get('/me', authMiddleware, (req, res) => {
   })
 })
 
+=======
+import { addLog, ACTIONS } from '../utils/activityLogger.js'
+
+const router = Router()
+
+>>>>>>> b385096c56d9c16716bdf65aa09115e5ba4b8c8f
 function getClientIp(req) {
   return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || req.socket?.remoteAddress
 }
 
+<<<<<<< HEAD
+=======
+// Limite stricte login : 5 tentatives / 15 min par IP
+>>>>>>> b385096c56d9c16716bdf65aa09115e5ba4b8c8f
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
   message: { error: 'Trop de tentatives de connexion, réessayez dans 15 minutes' },
   standardHeaders: true,
+<<<<<<< HEAD
   legacyHeaders: false
+=======
+  legacyHeaders: false,
+>>>>>>> b385096c56d9c16716bdf65aa09115e5ba4b8c8f
 })
 
 function toSafeUser(user) {
@@ -40,11 +59,23 @@ function toSafeUser(user) {
     fullName: user.fullName,
     role: user.role,
   }
+<<<<<<< HEAD
 }  // <-- this closing brace was missing
+=======
+}
+>>>>>>> b385096c56d9c16716bdf65aa09115e5ba4b8c8f
 
 // POST /api/auth/login
 router.post('/login', loginLimiter, async (req, res) => {
   try {
+<<<<<<< HEAD
+=======
+    const store = getStore()
+    if (!store) {
+      return res.status(503).json({ error: 'Service non prêt' })
+    }
+
+>>>>>>> b385096c56d9c16716bdf65aa09115e5ba4b8c8f
     const email = sanitizeString(req.body.email, 255)
     const password = req.body.password
     if (!email || !password) {
@@ -54,6 +85,7 @@ router.post('/login', loginLimiter, async (req, res) => {
       return res.status(400).json({ error: 'Format d\'email invalide' })
     }
 
+<<<<<<< HEAD
     console.log('[LOGIN] Calling Python service for login:', email)
 
     let pyRes, pyData
@@ -94,6 +126,27 @@ router.post('/login', loginLimiter, async (req, res) => {
       return res.status(401).json({ error: 'Utilisateur non trouvé' })
     }
 
+=======
+    const user = await store.getByEmail(email)
+    if (!user) {
+      addLog({ userEmail: email, action: ACTIONS.LOGIN_FAILED, details: 'Utilisateur non trouvé', ip: getClientIp(req) })
+      return res.status(401).json({ error: 'Email ou mot de passe incorrect' })
+    }
+
+    if (!user.isActive) {
+      addLog({ userId: user.id, userEmail: user.email, action: ACTIONS.LOGIN_FAILED, details: 'Compte désactivé', ip: getClientIp(req) })
+      return res.status(401).json({ error: 'Compte désactivé' })
+    }
+
+    const valid = await verifyPassword(password, user.passwordHash)
+    if (!valid) {
+      addLog({ userId: user.id, userEmail: user.email, action: ACTIONS.LOGIN_FAILED, details: 'Mot de passe incorrect', ip: getClientIp(req) })
+      return res.status(401).json({ error: 'Email ou mot de passe incorrect' })
+    }
+
+    addLog({ userId: user.id, userEmail: user.email, action: ACTIONS.LOGIN, ip: getClientIp(req) })
+
+>>>>>>> b385096c56d9c16716bdf65aa09115e5ba4b8c8f
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
@@ -102,6 +155,7 @@ router.post('/login', loginLimiter, async (req, res) => {
 
     res.json({
       token,
+<<<<<<< HEAD
       user: safeUser,
     })
 
@@ -121,16 +175,50 @@ router.post('/login', loginLimiter, async (req, res) => {
     }
   } catch (err) {
     console.error('[LOGIN] Login error:', err)
+=======
+      user: toSafeUser(user),
+    })
+  } catch (err) {
+    console.error('Login error:', err)
+    res.status(500).json({ error: 'Erreur serveur' })
+  }
+})
+
+// GET /api/auth/me
+router.get('/me', authMiddleware, async (req, res) => {
+  try {
+    const store = getStore()
+    if (!store) {
+      return res.status(503).json({ error: 'Service non prêt' })
+    }
+
+    const user = await store.getById(req.user.id)
+    if (!user || !user.isActive) {
+      return res.status(401).json({ error: 'Utilisateur non trouvé' })
+    }
+
+    res.json(toSafeUser(user))
+  } catch (err) {
+    console.error('Me error:', err)
+>>>>>>> b385096c56d9c16716bdf65aa09115e5ba4b8c8f
     res.status(500).json({ error: 'Erreur serveur' })
   }
 })
 
 // POST /api/auth/logout
 router.post('/logout', authMiddleware, (req, res) => {
+<<<<<<< HEAD
   res.json({ message: 'Déconnexion réussie' })
 })
 
 // PUT /api/auth/profile
+=======
+  addLog({ userId: req.user.id, userEmail: req.user.email, action: ACTIONS.LOGOUT, ip: getClientIp(req) })
+  res.json({ message: 'Déconnexion réussie' })
+})
+
+// PUT /api/auth/profile — modification du profil (utilisateur connecté)
+>>>>>>> b385096c56d9c16716bdf65aa09115e5ba4b8c8f
 router.put('/profile', authMiddleware, async (req, res) => {
   try {
     const store = getStore()
@@ -140,6 +228,10 @@ router.put('/profile', authMiddleware, async (req, res) => {
     const id = req.user.id
     const { fullName, currentPassword, newPassword } = req.body
 
+<<<<<<< HEAD
+=======
+    // Si changement de mot de passe, vérifier l'actuel
+>>>>>>> b385096c56d9c16716bdf65aa09115e5ba4b8c8f
     let passwordToSet = undefined
     if (newPassword && newPassword.length > 0) {
       if (!currentPassword) {
@@ -172,6 +264,14 @@ router.put('/profile', authMiddleware, async (req, res) => {
 
     if (!updated) return res.status(404).json({ error: 'Utilisateur non trouvé' })
 
+<<<<<<< HEAD
+=======
+    const details = []
+    if (fullName !== undefined) details.push('nom')
+    if (passwordToSet) details.push('mot de passe')
+    addLog({ userId: req.user.id, userEmail: req.user.email, action: ACTIONS.PROFILE_UPDATE, details: details.join(', '), ip: getClientIp(req) })
+
+>>>>>>> b385096c56d9c16716bdf65aa09115e5ba4b8c8f
     res.json(toSafeUser(updated))
   } catch (err) {
     console.error('Profile update error:', err)

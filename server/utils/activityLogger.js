@@ -3,11 +3,18 @@
  * En production avec SQL Server, on peut migrer vers une table activity_logs
  */
 
+<<<<<<< HEAD
 
 
 
 
 // Only export ACTIONS, no log storage here
+=======
+const logs = []
+const MAX_LOGS = 500
+let nextId = 1
+
+>>>>>>> b385096c56d9c16716bdf65aa09115e5ba4b8c8f
 const ACTIONS = {
   LOGIN: 'login',
   LOGIN_FAILED: 'login_failed',
@@ -17,9 +24,41 @@ const ACTIONS = {
   USER_UPDATED: 'user_updated',
 }
 
+<<<<<<< HEAD
 export { ACTIONS }
 
 
 
 
 
+=======
+/**
+ * Enregistre une activité
+ * @param {{ userId?: number, userEmail?: string, action: string, details?: string, ip?: string }}
+ */
+export function addLog({ userId, userEmail, action, details = '', ip }) {
+  logs.unshift({
+    id: nextId++,
+    userId: userId ?? null,
+    userEmail: userEmail ?? null,
+    action,
+    details,
+    ip: ip ?? null,
+    createdAt: new Date().toISOString(),
+  })
+  if (logs.length > MAX_LOGS) logs.pop()
+}
+
+/**
+ * Récupère les logs avec filtres optionnels
+ * @param {{ userId?: number, action?: string, limit?: number }}
+ */
+export function getLogs({ userId, action, limit = 100 } = {}) {
+  let result = [...logs]
+  if (userId != null) result = result.filter((l) => l.userId === userId)
+  if (action) result = result.filter((l) => l.action === action)
+  return result.slice(0, limit)
+}
+
+export { ACTIONS }
+>>>>>>> b385096c56d9c16716bdf65aa09115e5ba4b8c8f

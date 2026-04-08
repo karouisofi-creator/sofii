@@ -3,12 +3,20 @@ import sql from 'mssql'
 const config = {
   server: process.env.DB_SERVER || 'localhost',
   database: process.env.DB_DATABASE || 'DataFlowAssurance',
+<<<<<<< HEAD
   options: {
+=======
+  user: process.env.DB_USER || 'sa',
+  password: process.env.DB_PASSWORD || '',
+  options: {
+    encrypt: true,
+>>>>>>> b385096c56d9c16716bdf65aa09115e5ba4b8c8f
     trustServerCertificate: process.env.DB_TRUST_CERTIFICATE === 'true',
     enableArithAbort: true,
   },
 }
 
+<<<<<<< HEAD
 // Use Windows Authentication (NTLM) if requested
 if (process.env.DB_TRUSTED_CONNECTION === 'true') {
   config.authentication = {
@@ -24,6 +32,8 @@ if (process.env.DB_TRUSTED_CONNECTION === 'true') {
   config.password = process.env.DB_PASSWORD || '';
 }
 
+=======
+>>>>>>> b385096c56d9c16716bdf65aa09115e5ba4b8c8f
 let pool = null
 
 export async function getPool() {

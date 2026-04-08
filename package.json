@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+<<<<<<< HEAD
     "@typespec/ts-http-runtime": "^0.3.4",
     "bcrypt": "^5.1.0",
     "browserslist": "^4.21.9",
@@ -23,16 +24,26 @@
     "node-fetch": "^2.7.0",
     "node-releases": "^2.0.13",
     "queue-microtask": "^1.2.3",
+=======
+>>>>>>> b385096c56d9c16716bdf65aa09115e5ba4b8c8f
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0"
   },
   "devDependencies": {
+<<<<<<< HEAD
     "@vitejs/plugin-react": "1.0.7",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
     "postcss-load-config": "3.1.4",
     "tailwindcss": "3.3.3",
     "vite": "2.6.14"
+=======
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.16",
+    "vite": "^6.0.3"
+>>>>>>> b385096c56d9c16716bdf65aa09115e5ba4b8c8f
   }
 }
