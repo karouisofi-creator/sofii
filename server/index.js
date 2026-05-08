@@ -11,7 +11,11 @@ import rateLimit from "express-rate-limit";
 import authRoutes from "./routes/auth.js";
 import adminUsersRoutes from "./routes/admin/users.js";
 import adminLogsRoutes from "./routes/admin/logs.js";
+import adminSettingsRoutes from "./routes/admin/settings.js";
 import chatRoute from "./routes/chat.js";
+import dataRoutes from "./routes/data.js";
+import batchRoutes from "./routes/batch.js";
+import reportingRoutes from "./routes/reporting.js";
 import { initStore } from "./store/index.js";
 import { validateJwtSecret } from "./utils/security.js";
 
@@ -29,7 +33,7 @@ app.use(
   "/api",
   rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: 1000,
     message: { error: "Trop de requêtes, réessayez plus tard" },
     standardHeaders: true,
     legacyHeaders: false,
@@ -41,8 +45,11 @@ app.use(express.json({ limit: "10kb" }));
 app.use("/api/auth", authRoutes);
 app.use("/api/admin/users", adminUsersRoutes);
 app.use("/api/admin/logs", adminLogsRoutes);
+app.use("/api/admin/settings", adminSettingsRoutes);
 app.use("/api/chat", chatRoute);
-
+app.use("/api/data", dataRoutes);
+app.use("/api/batch", batchRoutes);
+app.use("/api/reporting", reportingRoutes);
 app.get("/", (req, res) => {
   res.json({
     name: "DataFlow Assurance API",

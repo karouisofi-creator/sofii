@@ -1,31 +1,38 @@
-import sql from 'mssql'
+import odbc from "odbc";
 
-const config = {
-  server: process.env.DB_SERVER || 'localhost',
-  database: process.env.DB_DATABASE || 'DataFlowAssurance',
-  user: process.env.DB_USER || 'sa',
-  password: process.env.DB_PASSWORD || '',
-  options: {
-    encrypt: true,
-    trustServerCertificate: process.env.DB_TRUST_CERTIFICATE === 'true',
-    enableArithAbort: true,
-  },
-}
-
-let pool = null
+const connectionString =
+  "DRIVER={ODBC Driver 17 for SQL Server};SERVER=(localdb)\\MyInstance;DATABASE=DataFlow;Trusted_Connection=yes;";
 
 export async function getPool() {
-  if (!pool) {
-    pool = await sql.connect(config)
-  }
-  return pool
+  return await odbc.connect(connectionString);
 }
 
-export async function query(sqlQuery, params = {}) {
-  const p = await getPool()
-  const request = p.request()
-  for (const [key, value] of Object.entries(params)) {
-    request.input(key, value)
+const serializeValue = (value) => {
+  if (typeof value === "bigint") return value.toString();
+  if (Array.isArray(value)) return value.map(serializeValue);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, entryValue]) => [key, serializeValue(entryValue)]),
+    );
   }
-  return request.query(sqlQuery)
+  return value;
+};
+
+export async function query(sqlQuery, params = {}) {
+  const conn = await odbc.connect(connectionString);
+
+  try {
+    let finalQuery = sqlQuery;
+    const values = [];
+
+    for (const [key, value] of Object.entries(params)) {
+      finalQuery = finalQuery.replace(new RegExp("@" + key, "g"), "?");
+      values.push(value);
+    }
+
+    const result = await conn.query(finalQuery, values);
+    return { recordset: serializeValue(result) };
+  } finally {
+    await conn.close();
+  }
 }

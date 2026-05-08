@@ -1,6 +1,37 @@
 import { query } from '../db.js'
 import { hashPassword } from '../utils/security.js'
 
+const defaultSettings = {
+  maintenanceMode: false,
+  emailNotifications: true,
+  securityAlerts: true,
+  autoSaveReports: true,
+  aiAssistant: true,
+}
+
+let settingsTableReady = false
+
+async function ensureSettingsTable() {
+  if (settingsTableReady) return
+
+  await query(`
+    IF OBJECT_ID('app_settings', 'U') IS NULL
+    BEGIN
+      CREATE TABLE app_settings (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        maintenanceMode BIT NOT NULL DEFAULT 0,
+        emailNotifications BIT NOT NULL DEFAULT 1,
+        securityAlerts BIT NOT NULL DEFAULT 1,
+        autoSaveReports BIT NOT NULL DEFAULT 1,
+        aiAssistant BIT NOT NULL DEFAULT 1,
+        updatedAt DATETIME2 NOT NULL DEFAULT GETDATE()
+      )
+    END
+  `)
+
+  settingsTableReady = true
+}
+
 export async function getByEmail(email) {
   const result = await query(
     `SELECT id, email, fullName, passwordHash, role, isActive 
@@ -69,4 +100,58 @@ export async function update(id, { fullName, role, isActive, password }) {
     )
   }
   return getById(id)
+}
+
+export async function getSettings() {
+  await ensureSettingsTable()
+
+  const result = await query(
+    `SELECT TOP 1 maintenanceMode, emailNotifications, securityAlerts, autoSaveReports, aiAssistant
+     FROM app_settings
+     ORDER BY id DESC`
+  )
+
+  const row = result.recordset[0]
+  if (!row) {
+    await saveSettings(defaultSettings)
+    return { ...defaultSettings }
+  }
+
+  return {
+    maintenanceMode: !!row.maintenanceMode,
+    emailNotifications: !!row.emailNotifications,
+    securityAlerts: !!row.securityAlerts,
+    autoSaveReports: !!row.autoSaveReports,
+    aiAssistant: !!row.aiAssistant,
+  }
+}
+
+export async function saveSettings(nextSettings) {
+  await ensureSettingsTable()
+
+  const payload = { ...defaultSettings, ...nextSettings }
+  const existing = await query(`SELECT TOP 1 id FROM app_settings ORDER BY id DESC`)
+
+  if (existing.recordset[0]) {
+    await query(
+      `UPDATE app_settings
+       SET maintenanceMode = @maintenanceMode,
+           emailNotifications = @emailNotifications,
+           securityAlerts = @securityAlerts,
+           autoSaveReports = @autoSaveReports,
+           aiAssistant = @aiAssistant,
+           updatedAt = GETDATE()
+       WHERE id = @id`,
+      { id: existing.recordset[0].id, ...payload }
+    )
+  } else {
+    await query(
+      `INSERT INTO app_settings
+       (maintenanceMode, emailNotifications, securityAlerts, autoSaveReports, aiAssistant)
+       VALUES (@maintenanceMode, @emailNotifications, @securityAlerts, @autoSaveReports, @aiAssistant)`,
+      payload
+    )
+  }
+
+  return payload
 }

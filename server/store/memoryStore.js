@@ -2,6 +2,15 @@ import { hashPassword } from '../utils/security.js'
 
 const users = new Map()
 let nextId = 2
+const defaultSettings = {
+  maintenanceMode: false,
+  emailNotifications: true,
+  securityAlerts: true,
+  autoSaveReports: true,
+  aiAssistant: true,
+}
+
+let settings = { ...defaultSettings }
 
 export async function init() {
   const hash = await hashPassword('Admin123!')
@@ -14,6 +23,7 @@ export async function init() {
     isActive: true,
     createdAt: new Date().toISOString(),
   })
+  settings = { ...defaultSettings }
 }
 
 export function getByEmail(email) {
@@ -64,4 +74,13 @@ export async function update(id, { fullName, role, isActive, password }) {
   }
   const { passwordHash: _, ...safe } = user
   return safe
+}
+
+export async function getSettings() {
+  return { ...settings }
+}
+
+export async function saveSettings(nextSettings) {
+  settings = { ...defaultSettings, ...nextSettings }
+  return { ...settings }
 }
