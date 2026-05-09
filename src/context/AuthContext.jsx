@@ -9,6 +9,15 @@ const ROLES = {
 
 const API_BASE = '/api'
 
+function getStoredUser() {
+  try {
+    const raw = localStorage.getItem('dataflow_user')
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
 async function apiFetch(url, options = {}) {
   const token = localStorage.getItem('dataflow_token')
   const headers = {
@@ -26,8 +35,8 @@ async function apiFetch(url, options = {}) {
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState(() => getStoredUser())
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem('dataflow_token')
@@ -36,18 +45,39 @@ export function AuthProvider({ children }) {
       return
     }
 
-    apiFetch('/auth/me')
+    const cachedUser = getStoredUser()
+    if (cachedUser) {
+      setUser(cachedUser)
+      setLoading(false)
+    } else {
+      setLoading(true)
+    }
+
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 4000)
+
+    apiFetch('/auth/me', { signal: controller.signal })
       .then((res) => res.json())
       .then((data) => {
         setUser(data)
         localStorage.setItem('dataflow_user', JSON.stringify(data))
       })
       .catch(() => {
-        localStorage.removeItem('dataflow_token')
-        localStorage.removeItem('dataflow_user')
-        setUser(null)
+        if (!cachedUser) {
+          localStorage.removeItem('dataflow_token')
+          localStorage.removeItem('dataflow_user')
+          setUser(null)
+        }
       })
-      .finally(() => setLoading(false))
+      .finally(() => {
+        clearTimeout(timeoutId)
+        setLoading(false)
+      })
+
+    return () => {
+      clearTimeout(timeoutId)
+      controller.abort()
+    }
   }, [])
 
   const login = async (email, password) => {

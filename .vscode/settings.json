@@ -1,0 +1,5 @@
+{
+    "python.globalModuleInstallation": true,
+    "python.analysis.enableTroubleshootMissingImports": true,
+    "python.analysis.includeVenvInWorkspaceSymbols": true
+}

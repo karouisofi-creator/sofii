@@ -15,6 +15,7 @@ import ticketsRoutes from './routes/tickets.js'
 import chatRoutes from './routes/chat.js'
 import queryRoutes from './routes/query.js'
 import adminReportsRoutes from './routes/admin/reports.js'
+import dataRoutes from './routes/data.js'
 import { initStore } from './store/index.js'
 import { validateJwtSecret } from './utils/security.js'
 
@@ -46,6 +47,7 @@ app.use('/api/chat', chatRoutes)
 app.use('/api/query', queryRoutes)
 app.use('/api/admin/reports', adminReportsRoutes)
 app.use('/api/reports', adminReportsRoutes)
+app.use('/api/data', dataRoutes)
 
 app.get('/', (req, res) => {
   res.json({

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start-api": "powershell -ExecutionPolicy Bypass -File server\\run_api.ps1"
   },
   "dependencies": {
     "@typespec/ts-http-runtime": "^0.3.4",
@@ -16,16 +17,20 @@
     "dotenv": "^17.4.1",
     "express": "^4.18.2",
     "express-rate-limit": "^8.3.2",
+    "file-saver": "^2.0.5",
     "helmet": "^8.1.0",
     "is-number": "^7.0.0",
     "jsonwebtoken": "^9.0.3",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
     "mssql": "^7.3.0",
     "node-fetch": "^2.7.0",
     "node-releases": "^2.0.13",
     "queue-microtask": "^1.2.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.28.0"
+    "react-router-dom": "^6.28.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "1.0.7",
