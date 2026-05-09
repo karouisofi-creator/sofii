@@ -1,8 +1,8 @@
 import { Router } from 'express'
 import { authMiddleware, requireAdmin } from '../../middleware/auth.js'
-import { getStore } from '../../store/index.js'
+import fetch from 'node-fetch'
 import { validatePasswordStrength, sanitizeString, isValidEmail } from '../../utils/security.js'
-import { addLog, ACTIONS } from '../../utils/activityLogger.js'
+import { ACTIONS } from '../../utils/activityLogger.js'
 
 const router = Router()
 
@@ -13,31 +13,26 @@ function getClientIp(req) {
 router.use(authMiddleware)
 router.use(requireAdmin)
 
-// GET /api/admin/users
+// GET /api/admin/users (proxy to Python API)
 router.get('/', async (req, res) => {
   try {
-    const store = getStore()
-    if (!store) return res.status(503).json({ error: 'Service non prêt' })
-
-    const list = store.listAll ? await store.listAll() : []
-    res.json(list)
+    const pyRes = await fetch('http://localhost:5001/users')
+    const users = await pyRes.json()
+    res.status(pyRes.status).json(users)
   } catch (err) {
     console.error('List users error:', err)
     res.status(500).json({ error: 'Erreur serveur' })
   }
 })
 
-// POST /api/admin/users
+// POST /api/admin/users (proxy to Python API)
 router.post('/', async (req, res) => {
   try {
-    const store = getStore()
-    if (!store) return res.status(503).json({ error: 'Service non prêt' })
-    if (!store.create) return res.status(501).json({ error: 'Création non supportée' })
-
     const email = sanitizeString(req.body.email, 255).toLowerCase()
     const fullName = sanitizeString(req.body.fullName, 255)
     const password = req.body.password
     const role = req.body.role === 'admin' ? 'admin' : 'user'
+    const isActive = req.body.isActive !== false
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email et mot de passe requis' })
@@ -50,18 +45,32 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: `Mot de passe : ${pwCheck.error}` })
     }
 
-    const created = await store.create({
-      email,
-      fullName: fullName || email,
-      password,
-      role,
+    const pyRes = await fetch('http://localhost:5001/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, fullName, password, role, isActive })
     })
-
-    if (!created) {
-      return res.status(409).json({ error: 'Un utilisateur avec cet email existe déjà' })
+    const data = await pyRes.json()
+    if (!pyRes.ok) {
+      return res.status(pyRes.status).json(data)
     }
-
-    res.status(201).json(created)
+        // Log user creation
+        try {
+          await fetch('http://localhost:5001/logs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: req.user?.id,
+              userEmail: req.user?.email,
+              action: 'user_created',
+              details: `Nouvel utilisateur: ${email}`,
+              ip: getClientIp(req)
+            })
+          })
+        } catch (e) {
+          console.error('Log error:', e)
+        }
+        res.status(201).json(data)
   } catch (err) {
     console.error('Create user error:', err)
     res.status(500).json({ error: 'Erreur serveur' })

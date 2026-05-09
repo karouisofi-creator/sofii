@@ -1,38 +1,61 @@
-import odbc from "odbc";
+import sql from 'mssql'
 
-const connectionString =
-  "DRIVER={ODBC Driver 17 for SQL Server};SERVER=(localdb)\\MyInstance;DATABASE=DataFlow;Trusted_Connection=yes;";
-
-export async function getPool() {
-  return await odbc.connect(connectionString);
-}
-
-const serializeValue = (value) => {
-  if (typeof value === "bigint") return value.toString();
-  if (Array.isArray(value)) return value.map(serializeValue);
-  if (value && typeof value === "object") {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, entryValue]) => [key, serializeValue(entryValue)]),
-    );
-  }
-  return value;
+const config = {
+  // Prefer explicit DB_SERVER, otherwise default to localhost for typical dev setups
+  server: process.env.DB_SERVER || 'localhost',
+  database: process.env.DB_DATABASE,
+  options: {
+    trustServerCertificate: process.env.DB_TRUST_CERTIFICATE === 'true',
+    enableArithAbort: true,
+  },
+  // support specifying a named instance (useful for LocalDB: e.g. MyInstance)
 };
 
-export async function query(sqlQuery, params = {}) {
-  const conn = await odbc.connect(connectionString);
+// If a DB instance name is provided, set it on options (mssql supports instanceName)
+if (process.env.DB_INSTANCE) {
+  config.options.instanceName = process.env.DB_INSTANCE;
+}
 
-  try {
-    let finalQuery = sqlQuery;
-    const values = [];
-
-    for (const [key, value] of Object.entries(params)) {
-      finalQuery = finalQuery.replace(new RegExp("@" + key, "g"), "?");
-      values.push(value);
+// Use Windows Authentication (NTLM) if requested
+if (process.env.DB_TRUSTED_CONNECTION === 'true') {
+  config.authentication = {
+    type: 'ntlm',
+    options: {
+      domain: '', // Use current user's domain
+      userName: '', // Use current Windows user
+      password: '', // Use current Windows user
     }
-
-    const result = await conn.query(finalQuery, values);
-    return { recordset: serializeValue(result) };
-  } finally {
-    await conn.close();
   }
+} else {
+  config.user = process.env.DB_USER || 'sa';
+  config.password = process.env.DB_PASSWORD || '';
+}
+
+let pool = null
+
+export async function getPool() {
+  if (!pool) {
+    try {
+      pool = await sql.connect(config)
+      return pool
+    } catch (err) {
+      console.error('[DB] Connection failed with config:', {
+        server: config.server,
+        instanceName: config.options && config.options.instanceName,
+        database: config.database,
+      })
+      console.error('[DB] Connect error:', err && err.message ? err.message : err)
+      throw err
+    }
+  }
+  return pool
+}
+
+export async function query(sqlQuery, params = {}) {
+  const p = await getPool()
+  const request = p.request()
+  for (const [key, value] of Object.entries(params)) {
+    request.input(key, value)
+  }
+  return request.query(sqlQuery)
 }

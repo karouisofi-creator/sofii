@@ -1,0 +1,38 @@
+[
+  {
+    "id": 4,
+    "userId": 5,
+    "userEmail": "admin3@email.com",
+    "action": "login",
+    "details": "",
+    "ip": "::ffff:127.0.0.1",
+    "createdAt": "2026-04-08T01:13:49.934Z"
+  },
+  {
+    "id": 3,
+    "userId": 5,
+    "userEmail": "admin3@email.com",
+    "action": "login",
+    "details": "",
+    "ip": "::ffff:127.0.0.1",
+    "createdAt": "2026-04-08T01:13:17.000Z"
+  },
+  {
+    "id": 2,
+    "userId": 5,
+    "userEmail": "admin3@email.com",
+    "action": "login",
+    "details": "",
+    "ip": "::ffff:127.0.0.1",
+    "createdAt": "2026-04-08T01:10:11.426Z"
+  },
+  {
+    "id": 1,
+    "userId": 5,
+    "userEmail": "admin3@email.com",
+    "action": "login",
+    "details": "",
+    "ip": "::ffff:127.0.0.1",
+    "createdAt": "2026-04-08T01:09:58.816Z"
+  }
+]
