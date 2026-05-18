@@ -416,6 +416,37 @@ def _build_claim_filters(args):
     return where_sql, params
 
 
+CLAIM_COLUMN_CACHE = {}
+
+
+def _has_column(conn, table_name, column_name):
+    cache_key = f"{table_name}.{column_name}"
+    if cache_key in CLAIM_COLUMN_CACHE:
+        return CLAIM_COLUMN_CACHE[cache_key]
+
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT 1
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = 'dbo'
+          AND TABLE_NAME = ?
+          AND COLUMN_NAME = ?
+        """,
+        (table_name, column_name),
+    )
+    exists = cursor.fetchone() is not None
+    CLAIM_COLUMN_CACHE[cache_key] = exists
+    return exists
+
+
+def _rejection_reason_expression(has_column):
+    if has_column:
+        return "NULLIF(LTRIM(RTRIM(c.rejection_reason)), '')"
+
+    return "CASE WHEN UPPER(ISNULL(c.code_etat, '')) IN ('REJETE', 'RJ', 'REJECTED') THEN 'Rejeté' ELSE NULL END"
+
+
 @app.route('/api/data/filters', methods=['GET'])
 def get_filters():
     """Get available filters for dashboard from real claims table."""
@@ -512,36 +543,27 @@ def get_teams():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-
-        conditions = []
-        params = []
-        team = request.args.get('team')
-        agent = request.args.get('agent')
-        centre = request.args.get('centre')
-
-        if team:
-            conditions.append("site_gestion_theo = ?")
-            params.append(team)
-        if agent:
-            conditions.append("utilisateur = ?")
-            params.append(agent)
-        if centre:
-            conditions.append("site_gestion_theo = ?")
-            params.append(centre)
-
-        where_sql = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+        where_sql, params = _build_claim_filters(request.args)
 
         cursor.execute(
             f"""
             SELECT
-                ISNULL(site_gestion_theo, 'N/A') AS team,
-                ISNULL(utilisateur, 'N/A') AS agent,
-                ISNULL(site_gestion_theo, 'N/A') AS centre,
-                COUNT(*) AS nb_claims_treated
-            FROM dbo.claims_closed
+                ISNULL(c.site_gestion_theo, 'N/A') AS team,
+                ISNULL(c.utilisateur, 'N/A') AS agent,
+                ISNULL(c.site_gestion_theo, 'N/A') AS centre,
+                CAST(AVG(CASE WHEN c.date_cloture IS NOT NULL AND c.date_survenance IS NOT NULL AND DATEDIFF(DAY, c.date_survenance, c.date_cloture) <= 20 THEN 100.0 ELSE 0.0 END) AS DECIMAL(10,2)) AS provider_claim_20days,
+                SUM(CASE WHEN c.date_cloture IS NOT NULL AND c.date_survenance IS NOT NULL AND DATEDIFF(DAY, c.date_survenance, c.date_cloture) <= 20 THEN 1 ELSE 0 END) AS nb_claim_treated_20d,
+                SUM(CASE WHEN c.date_cloture IS NOT NULL AND c.date_survenance IS NOT NULL AND DATEDIFF(DAY, c.date_survenance, c.date_cloture) <= 30 THEN 1 ELSE 0 END) AS nb_claim_treated_30d,
+                COUNT(DISTINCT c.id_sinistre) AS nb_claims_treated,
+                COUNT(l.id_ligne) AS nb_ligne_claims_treated,
+                COUNT(DISTINCT CASE WHEN l.id_ligne IS NOT NULL THEN c.id_sinistre END) AS nb_claims_ss,
+                COUNT(l.id_ligne) AS nb_ligne_claims_ss
+                        FROM dbo.claims_closed c
+            LEFT JOIN dbo.claims_closed_lines l
+              ON l.id_sinistre = c.id_sinistre AND l.num_sinistre = c.num_sinistre
             {where_sql}
-            GROUP BY site_gestion_theo, utilisateur
-            ORDER BY nb_claims_treated DESC
+            GROUP BY c.site_gestion_theo, c.utilisateur
+            ORDER BY nb_claims_treated DESC, team ASC, agent ASC
             """,
             params
         )
@@ -653,6 +675,159 @@ def get_monthly_trends():
         return jsonify(trends)
     except Exception as e:
         print(f"[MONTHLY TRENDS ERROR] {e}")
+        return jsonify([])
+
+
+@app.route('/api/data/top-ec-reasons', methods=['GET'])
+def get_top_ec_reasons():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        where_sql, params = _build_claim_filters(request.args)
+        has_ec_reason = _has_column(conn, 'claims_closed', 'EC_REASON')
+        reason_expr = "NULLIF(LTRIM(RTRIM(EC_REASON)), '')" if has_ec_reason else "NULLIF(LTRIM(RTRIM(type_of_log)), '')"
+
+        cursor.execute(
+            f"""
+            SELECT TOP 10
+                COALESCE({reason_expr}, 'Autre') AS name,
+                COUNT(*) AS value
+            FROM dbo.claims_closed
+            {where_sql}
+            GROUP BY COALESCE({reason_expr}, 'Autre')
+            ORDER BY value DESC, name ASC
+            """,
+            params,
+        )
+        rows = _rows_to_dicts(cursor)
+        conn.close()
+        return jsonify(rows)
+    except Exception as e:
+        print(f"[TOP EC REASONS ERROR] {e}")
+        return jsonify([])
+
+
+@app.route('/api/data/adjustment-reasons', methods=['GET'])
+def get_adjustment_reasons():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        where_sql, params = _build_claim_filters(request.args)
+        has_adjustment_reason = _has_column(conn, 'claims_closed', 'ADJUSTMENT_REASON')
+        reason_expr = "NULLIF(LTRIM(RTRIM(ADJUSTMENT_REASON)), '')" if has_adjustment_reason else "NULLIF(LTRIM(RTRIM(type_of_log)), '')"
+
+        cursor.execute(
+            f"""
+            SELECT TOP 10
+                COALESCE({reason_expr}, 'Autre') AS name,
+                COUNT(*) AS value
+            FROM dbo.claims_closed
+            {where_sql}
+            GROUP BY COALESCE({reason_expr}, 'Autre')
+            ORDER BY value DESC, name ASC
+            """,
+            params,
+        )
+        rows = _rows_to_dicts(cursor)
+        conn.close()
+        return jsonify(rows)
+    except Exception as e:
+        print(f"[ADJUSTMENT REASONS ERROR] {e}")
+        return jsonify([])
+
+
+@app.route('/api/data/top-rejection-reasons', methods=['GET'])
+def get_top_rejection_reasons():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        where_sql, params = _build_claim_filters(request.args)
+        has_rejection_reason = _has_column(conn, 'claims_closed', 'rejection_reason')
+        rejection_expr = _rejection_reason_expression(has_rejection_reason)
+
+        cursor.execute(
+            f"""
+            SELECT TOP 10
+                COALESCE({rejection_expr}, 'Autre') AS name,
+                COUNT(*) AS value
+            FROM dbo.claims_closed c
+            {where_sql}
+            GROUP BY COALESCE({rejection_expr}, 'Autre')
+            ORDER BY value DESC, name ASC
+            """,
+            params,
+        )
+        rows = _rows_to_dicts(cursor)
+        conn.close()
+        return jsonify(rows)
+    except Exception as e:
+        print(f"[TOP REJECTION REASONS ERROR] {e}")
+        return jsonify([])
+
+
+@app.route('/api/data/insured-claims-center', methods=['GET'])
+def get_insured_claims_center():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        where_sql, params = _build_claim_filters(request.args)
+
+        cursor.execute(
+            f"""
+            SELECT
+                ISNULL(site_gestion_theo, 'N/A') AS centre,
+                COUNT(DISTINCT id_sinistre) AS nb_insured_claims_treated,
+                SUM(CASE WHEN date_cloture IS NOT NULL AND date_survenance IS NOT NULL AND DATEDIFF(DAY, date_survenance, date_cloture) <= 5 THEN 1 ELSE 0 END) AS nb_insured_claims_treated_5d,
+                AVG(CASE WHEN date_cloture IS NOT NULL AND date_survenance IS NOT NULL THEN DATEDIFF(DAY, date_survenance, date_cloture) * 1.0 END) AS tat_5_days,
+                CAST(5 AS DECIMAL(10,2)) AS target_5days,
+                CAST(5.5 AS DECIMAL(10,2)) AS tolerance_5days
+            FROM dbo.claims_closed
+            {where_sql}
+            GROUP BY site_gestion_theo
+            ORDER BY nb_insured_claims_treated DESC, centre ASC
+            """,
+            params,
+        )
+        rows = _rows_to_dicts(cursor)
+        conn.close()
+        return jsonify(rows)
+    except Exception as e:
+        print(f"[INSURED CLAIMS CENTER ERROR] {e}")
+        return jsonify([])
+
+
+@app.route('/api/data/provider-claims-center', methods=['GET'])
+def get_provider_claims_center():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        where_sql, params = _build_claim_filters(request.args)
+
+        cursor.execute(
+            f"""
+            SELECT
+                ISNULL(c.site_gestion_theo, 'N/A') AS centre,
+                CAST(AVG(CASE WHEN c.date_cloture IS NOT NULL AND c.date_survenance IS NOT NULL AND DATEDIFF(DAY, c.date_survenance, c.date_cloture) <= 20 THEN 100.0 ELSE 0.0 END) AS DECIMAL(10,2)) AS provider_claim_20days,
+                SUM(CASE WHEN c.date_cloture IS NOT NULL AND c.date_survenance IS NOT NULL AND DATEDIFF(DAY, c.date_survenance, c.date_cloture) <= 20 THEN 1 ELSE 0 END) AS nb_claim_treated_20d,
+                SUM(CASE WHEN c.date_cloture IS NOT NULL AND c.date_survenance IS NOT NULL AND DATEDIFF(DAY, c.date_survenance, c.date_cloture) <= 30 THEN 1 ELSE 0 END) AS nb_claim_treated_30d,
+                COUNT(DISTINCT c.id_sinistre) AS nb_claims_treated,
+                COUNT(l.id_ligne) AS nb_ligne_claims_treated,
+                COUNT(DISTINCT CASE WHEN l.id_ligne IS NOT NULL THEN c.id_sinistre END) AS nb_claims_ss,
+                COUNT(l.id_ligne) AS nb_ligne_claims_ss
+            FROM dbo.claims_closed c
+            LEFT JOIN dbo.claims_closed_lines l
+              ON l.id_sinistre = c.id_sinistre AND l.num_sinistre = c.num_sinistre
+            {where_sql}
+            GROUP BY c.site_gestion_theo
+            ORDER BY nb_claims_treated DESC, centre ASC
+            """,
+            params,
+        )
+        rows = _rows_to_dicts(cursor)
+        conn.close()
+        return jsonify(rows)
+    except Exception as e:
+        print(f"[PROVIDER CLAIMS CENTER ERROR] {e}")
         return jsonify([])
 
 print(app.url_map)

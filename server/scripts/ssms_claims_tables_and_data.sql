@@ -25,12 +25,19 @@ BEGIN
         id_sinistre BIGINT NOT NULL,
         num_sinistre NVARCHAR(60) NOT NULL,
         code_etat NVARCHAR(20) NULL,
+        EC_REASON NVARCHAR(400) NULL,
+        ADJUSTMENT_REASON NVARCHAR(400) NULL,
+        ADJUSTMENT_DETAIL NVARCHAR(MAX) NULL,
+        rejection_reason NVARCHAR(400) NULL,
+        rejection_detail NVARCHAR(MAX) NULL,
         date_cloture DATETIME2 NULL,
         date_survenance DATETIME2 NULL,
         date_ouverture DATETIME2 NULL,
         utilisateur NVARCHAR(255) NULL,
         marque NVARCHAR(100) NULL,
         nom_assureur NVARCHAR(255) NULL,
+        provider_id NVARCHAR(100) NULL,
+        provider_name NVARCHAR(255) NULL,
         site_gestion_dcpt NVARCHAR(100) NULL,
         site_gestion_theo NVARCHAR(100) NULL,
         rep_tiers_conv NVARCHAR(60) NULL,
@@ -56,7 +63,30 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_claims_closed_num_sini
     CREATE INDEX IX_claims_closed_num_sinistre ON dbo.claims_closed(num_sinistre);
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_claims_closed_date_cloture' AND object_id = OBJECT_ID('dbo.claims_closed'))
     CREATE INDEX IX_claims_closed_date_cloture ON dbo.claims_closed(date_cloture);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_claims_closed_ec_reason' AND object_id = OBJECT_ID('dbo.claims_closed'))
+    CREATE INDEX IX_claims_closed_ec_reason ON dbo.claims_closed(EC_REASON);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_claims_closed_adjustment_reason' AND object_id = OBJECT_ID('dbo.claims_closed'))
+    CREATE INDEX IX_claims_closed_adjustment_reason ON dbo.claims_closed(ADJUSTMENT_REASON);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_claims_closed_rejection_reason' AND object_id = OBJECT_ID('dbo.claims_closed'))
+    CREATE INDEX IX_claims_closed_rejection_reason ON dbo.claims_closed(rejection_reason);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_claims_closed_provider_name' AND object_id = OBJECT_ID('dbo.claims_closed'))
+    CREATE INDEX IX_claims_closed_provider_name ON dbo.claims_closed(provider_name);
 GO
+
+IF COL_LENGTH('dbo.claims_closed', 'EC_REASON') IS NULL
+    ALTER TABLE dbo.claims_closed ADD EC_REASON NVARCHAR(400) NULL;
+IF COL_LENGTH('dbo.claims_closed', 'ADJUSTMENT_REASON') IS NULL
+    ALTER TABLE dbo.claims_closed ADD ADJUSTMENT_REASON NVARCHAR(400) NULL;
+IF COL_LENGTH('dbo.claims_closed', 'ADJUSTMENT_DETAIL') IS NULL
+    ALTER TABLE dbo.claims_closed ADD ADJUSTMENT_DETAIL NVARCHAR(MAX) NULL;
+IF COL_LENGTH('dbo.claims_closed', 'rejection_reason') IS NULL
+    ALTER TABLE dbo.claims_closed ADD rejection_reason NVARCHAR(400) NULL;
+IF COL_LENGTH('dbo.claims_closed', 'rejection_detail') IS NULL
+    ALTER TABLE dbo.claims_closed ADD rejection_detail NVARCHAR(MAX) NULL;
+IF COL_LENGTH('dbo.claims_closed', 'provider_id') IS NULL
+    ALTER TABLE dbo.claims_closed ADD provider_id NVARCHAR(100) NULL;
+IF COL_LENGTH('dbo.claims_closed', 'provider_name') IS NULL
+    ALTER TABLE dbo.claims_closed ADD provider_name NVARCHAR(255) NULL;
 
 /* =========================
    2) TABLE: claims_closed_lines
