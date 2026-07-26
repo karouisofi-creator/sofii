@@ -12,7 +12,8 @@ import authRoutes from "./routes/auth.js";
 import adminUsersRoutes from "./routes/admin/users.js";
 import adminLogsRoutes from "./routes/admin/logs.js";
 import ticketsRoutes from "./routes/tickets.js";
-import chatRoutes from "./routes/chat.js";
+// Use the integrated chat router (includes Groq integration and public test endpoints)
+import chatRoutes from "./routes/chat-integrated.js";
 import queryRoutes from "./routes/query.js";
 import adminReportsRoutes from "./routes/admin/reports.js";
 import dataRoutes from "./routes/data.js";
@@ -21,6 +22,20 @@ import { validateJwtSecret } from "./utils/security.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const IS_DEV = process.env.NODE_ENV !== "production";
+
+function getClientIp(req) {
+  return (
+    req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+    req.ip ||
+    req.socket?.remoteAddress ||
+    ""
+  );
+}
+
+function isLocalhostIp(ip) {
+  return ["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(ip);
+}
 
 // Helmet : en-têtes HTTP de sécurité
 app.use(helmet({ contentSecurityPolicy: false }));
@@ -33,8 +48,11 @@ app.use(
   "/api",
   rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: IS_DEV ? 999999 : 100,
     message: { error: "Trop de requêtes, réessayez plus tard" },
+    keyGenerator: (req) => getClientIp(req),
+    // Disable rate limit completely in dev
+    skip: (req) => IS_DEV === true,
     standardHeaders: true,
     legacyHeaders: false,
   }),

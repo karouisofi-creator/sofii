@@ -2,8 +2,129 @@ from flask import Flask, request, jsonify
 import pyodbc
 import bcrypt
 import os
+import re
+import unicodedata
+import json
+import csv
+from pathlib import Path
 
 FAILED_DB_SERVERS_LOGGED = set()
+EXCEL_CHAT_KB = {
+    'name': None,
+    'columns': [],
+    'rows': [],
+}
+
+
+def escape_html(s):
+    return (
+        str(s)
+        .replace('&', '&amp;')
+        .replace('<', '&lt;')
+        .replace('>', '&gt;')
+        .replace('"', '&quot;')
+        .replace("'", '&#39;')
+    )
+
+
+def try_load_json(path: Path):
+    try:
+        with path.open('r', encoding='utf-8') as f:
+            data = json.load(f)
+        return data
+    except Exception:
+        return None
+
+
+def try_load_csv(path: Path):
+    try:
+        rows = []
+        with path.open('r', encoding='utf-8-sig') as f:
+            reader = csv.DictReader(f)
+            for r in reader:
+                rows.append({k: (v if v != '' else None) for k, v in r.items()})
+        return {'name': path.name, 'columns': list(rows[0].keys()) if rows else [], 'rows': rows}
+    except Exception:
+        return None
+
+
+def try_load_xlsx(path: Path):
+    try:
+        import openpyxl
+    except Exception:
+        return None
+
+    try:
+        wb = openpyxl.load_workbook(path, data_only=True)
+        all_rows = []
+        all_columns = set()
+        for sheet_name in wb.sheetnames:
+            sheet = wb[sheet_name]
+            headers = []
+            rows = []
+            for i, row in enumerate(sheet.iter_rows(values_only=True)):
+                if i == 0:
+                    headers = [str(c) if c is not None else f'col{idx}' for idx, c in enumerate(row)]
+                    continue
+                obj = {}
+                for idx, val in enumerate(row):
+                    key = headers[idx] if idx < len(headers) else f'col{idx}'
+                    obj[key] = val
+                # annotate which sheet this row came from
+                obj['Sheet'] = sheet_name
+                rows.append(obj)
+            for h in headers:
+                all_columns.add(h)
+        
+            all_rows.extend(rows)
+        # ensure 'Sheet' is included in columns
+        all_columns.add('Sheet')
+        return {'name': path.name, 'columns': list(all_columns), 'rows': all_rows}
+    except Exception:
+        return None
+
+
+def load_kb_at_startup():
+    data_dir = Path(__file__).resolve().parent / 'data'
+    data_dir.mkdir(exist_ok=True)
+
+    # Priority: JSON -> CSV -> XLSX
+    json_path = data_dir / 'knowledge.json'
+    csv_path = data_dir / 'knowledge.csv'
+    xlsx_path = data_dir / 'knowledge.xlsx'
+
+    loaded = None
+    if json_path.exists():
+        loaded = try_load_json(json_path)
+        if loaded and isinstance(loaded, dict) and 'rows' in loaded:
+            EXCEL_CHAT_KB['name'] = loaded.get('name', json_path.name)
+            EXCEL_CHAT_KB['columns'] = loaded.get('columns', [])
+            EXCEL_CHAT_KB['rows'] = loaded.get('rows', [])
+            print(f"Loaded KB from {json_path} with {len(EXCEL_CHAT_KB['rows'])} rows")
+            return
+
+    if csv_path.exists():
+        loaded = try_load_csv(csv_path)
+        if loaded:
+            EXCEL_CHAT_KB['name'] = loaded.get('name')
+            EXCEL_CHAT_KB['columns'] = loaded.get('columns', [])
+            EXCEL_CHAT_KB['rows'] = loaded.get('rows', [])
+            print(f"Loaded KB from {csv_path} with {len(EXCEL_CHAT_KB['rows'])} rows")
+            return
+
+    if xlsx_path.exists():
+        loaded = try_load_xlsx(xlsx_path)
+        if loaded:
+            EXCEL_CHAT_KB['name'] = loaded.get('name')
+            EXCEL_CHAT_KB['columns'] = loaded.get('columns', [])
+            EXCEL_CHAT_KB['rows'] = loaded.get('rows', [])
+            print(f"Loaded KB from {xlsx_path} with {len(EXCEL_CHAT_KB['rows'])} rows")
+            return
+
+    print('No local KB found at server/data. Start by placing knowledge.json/csv/xlsx into server/data.')
+
+
+load_kb_at_startup()
 
 app = Flask(__name__)
 
@@ -239,7 +360,16 @@ def get_db_connection():
     if env_named_pipe:
         candidate_servers.append(env_named_pipe)
 
-    for fallback_server in [r'(localdb)\MyInstance', r'(localdb)\MSSQLLocalDB']:
+    # Try common SQL Server instances
+    for fallback_server in [
+        r'(localdb)\MyInstance',
+        r'(localdb)\MSSQLLocalDB',
+        r'localhost\SQLEXPRESS',
+        r'.\SQLEXPRESS',
+        r'127.0.0.1\SQLEXPRESS',
+        'localhost',
+        '.',
+    ]:
         if fallback_server not in candidate_servers:
             candidate_servers.append(fallback_server)
 
@@ -292,6 +422,378 @@ def login():
     if not bcrypt.checkpw(password.encode(), password_hash.encode()):
         return jsonify({'error': 'Invalid credentials'}), 401
     return jsonify({'message': 'Login successful', 'user': user})
+
+
+def normalize_text(value):
+    text = unicodedata.normalize('NFD', str(value or ''))
+    text = ''.join(character for character in text if unicodedata.category(character) != 'Mn')
+    return text.lower()
+
+
+def tokenize(value):
+    raw_tokens = re.findall(r'[A-Za-z0-9]{2,}', normalize_text(value))
+    stop_words = {
+        'ai', 'alors', 'au', 'aux', 'avec', 'ce', 'ces', 'cette', 'dans', 'de', 'des', 'du',
+        'elle', 'en', 'est', 'et', 'fait', 'faire', 'il', 'je', 'la', 'le', 'les', 'leur',
+        'leurs', 'lui', 'mais', 'me', 'mes', 'mon', 'ne', 'nos', 'notre', 'nous', 'on', 'ou',
+        'par', 'pas', 'pour', 'que', 'qui', 'sa', 'se', 'ses', 'son', 'sur', 'ta', 'te', 'tes',
+        'ton', 'tu', 'un', 'une', 'vos', 'votre', 'vous'
+    }
+    return [token for token in raw_tokens if token not in stop_words]
+
+
+def row_to_search_text(row):
+    return ' | '.join(f'{key}: {value}' for key, value in row.items())
+
+
+def score_row(row, tokens):
+    if not tokens:
+        return 0
+    haystack = normalize_text(row_to_search_text(row))
+    return sum(1 for token in tokens if token in haystack)
+
+
+def format_row(row):
+    parts = []
+    for key, value in list(row.items())[:8]:
+        if value is None:
+            continue
+        text = str(value).strip()
+        if text:
+            parts.append(f'{key}: {text}')
+    return ' | '.join(parts) if parts else 'Ligne vide'
+
+
+def bold_icd_codes(text):
+    # Return ICD codes as plain text; normalize slashes and spacing
+    escaped = escape_html(text)
+    return re.sub(r'\s*/\s*', ' / ', escaped)
+
+
+def build_excel_reply(question, mode='synthese'):
+    if not EXCEL_CHAT_KB['rows']:
+        return "Aucun fichier Excel n'est chargé. Importez d'abord votre Excel pour que je réponde uniquement à partir de ce contenu."
+
+    question_upper = str(question or '').upper()
+    exact_codes = re.findall(r'[A-Z]\d{2,4}', question_upper)
+    tokens = tokenize(question)
+    ranked_rows = []
+    for index, row in enumerate(EXCEL_CHAT_KB['rows']):
+        score = score_row(row, tokens)
+        row_upper = normalize_text(row_to_search_text(row)).upper()
+        if exact_codes and any(code in row_upper for code in exact_codes):
+            score += 5
+        # If row has a category-like column name, boost score when tokens match it
+        if tokens:
+            for key, val in row.items():
+                if val is None:
+                    continue
+                key_norm = normalize_text(str(key))
+                if any(k in key_norm for k in ['categorie', 'category', 'cat', 'specialite']):
+                    if any(token in normalize_text(str(val)) for token in tokens):
+                        score += 4
+        if score > 0:
+            ranked_rows.append((score, index, row))
+    ranked_rows.sort(key=lambda item: (-item[0], item[1]))
+
+    def extract_category_reference(row):
+        def pick_value_priority(keywords):
+            # For priority, iterate keywords in order and for each keyword
+            # scan all keys to find the first matching key.
+            for keyword in keywords:
+                for key, value in row.items():
+                    if value is None:
+                        continue
+                    key_norm = normalize_text(str(key))
+                    if keyword in key_norm:
+                        text = str(value).strip()
+                        if text:
+                            return text
+            return None
+
+        category = pick_value_priority(['categorie', 'category', 'cat', 'specialite'])
+        # prefer ICD/code columns before acte/soin
+        reference = pick_value_priority(['icd', 'code', 'reference', 'ref', 'acte', 'soin'])
+
+        if category and reference:
+            return category, reference
+
+        # Fallback: first two non-empty values if headers are unknown.
+        non_empty_values = []
+        for _, value in row.items():
+            if value is None:
+                continue
+            text = str(value).strip()
+            if text:
+                non_empty_values.append(text)
+
+        if not category and non_empty_values:
+            category = non_empty_values[0]
+        if not reference and len(non_empty_values) > 1:
+            reference = non_empty_values[1]
+
+        return category, reference
+
+    def find_effective_category_at(index):
+        # Look at current and previous rows to find nearest non-empty category-like field
+        for j in range(index, -1, -1):
+            r = EXCEL_CHAT_KB['rows'][j]
+            cat, _ = extract_category_reference(r)
+            if cat:
+                return cat
+        return None
+
+    if not ranked_rows:
+        # Fallback: try to match the query against obvious category/speciality columns
+        qnorm = normalize_text(str(question or ''))
+        candidate_rows = []
+        for index, row in enumerate(EXCEL_CHAT_KB['rows']):
+            # try to extract category-like fields, fallback to previous rows if empty
+            category, _ = extract_category_reference(row)
+            if not category:
+                category = find_effective_category_at(index)
+            if category:
+                if normalize_text(category).find(qnorm) != -1:
+                    candidate_rows.append((0, index, row))
+
+        if candidate_rows:
+            # format candidate rows similarly to synthesis mode
+            parts = []
+            for _, _, row in candidate_rows[:6]:
+                cat, ref = extract_category_reference(row)
+                frags = []
+                if cat:
+                    frags.append(f"Catégorie: {escape_html(cat)}")
+                if ref:
+                    frags.append(f"Référence: {bold_icd_codes(ref)}")
+                parts.append(' — '.join(frags))
+            return '<br/>'.join(parts)
+
+        # Second fallback: search any cell content (soins, ICD, etc.) for query substring
+        cell_matches = []
+        for index, row in enumerate(EXCEL_CHAT_KB['rows']):
+            # join all values into a single searchable string
+            row_values = ' '.join([str(v) for v in row.values() if v is not None])
+            if normalize_text(row_values).find(qnorm) != -1:
+                cell_matches.append((0, index, row))
+
+        if cell_matches:
+            parts = []
+            for _, _, row in cell_matches[:6]:
+                cat = find_effective_category_at(EXCEL_CHAT_KB['rows'].index(row))
+                _, ref = extract_category_reference(row)
+                frags = []
+                if cat:
+                    frags.append(f"Catégorie: {escape_html(cat)}")
+                if ref:
+                    frags.append(f"Référence: {bold_icd_codes(ref)}")
+                # include a short snippet of the soins cell
+                soins = row.get('Soins') or row.get('Soin') or None
+                if soins:
+                    frags.append(f"Soin: {escape_html(str(soins))}")
+                parts.append(' — '.join(frags))
+            return '<br/>'.join(parts)
+
+        return "Je ne trouve pas cette information. Posez une question plus proche des colonnes ou des valeurs du tableau."
+
+    def highlight(text, question):
+        # Return escaped plain text (no HTML tags)
+        return escape_html(text)
+
+    def extract_category_reference(row):
+        def pick_value_priority(keywords):
+            for keyword in keywords:
+                for key, value in row.items():
+                    if value is None:
+                        continue
+                    key_norm = normalize_text(str(key))
+                    if keyword in key_norm:
+                        text = str(value).strip()
+                        if text:
+                            return text
+            return None
+
+        category = pick_value_priority(['categorie', 'category', 'cat', 'specialite'])
+        reference = pick_value_priority(['icd', 'code', 'reference', 'ref', 'acte', 'soin'])
+
+        if category and reference:
+            return category, reference
+
+        # Fallback: first two non-empty values if headers are unknown.
+        non_empty_values = []
+        for _, value in row.items():
+            if value is None:
+                continue
+            text = str(value).strip()
+            if text:
+                non_empty_values.append(text)
+
+        if not category and non_empty_values:
+            category = non_empty_values[0]
+        if not reference and len(non_empty_values) > 1:
+            reference = non_empty_values[1]
+
+        return category, reference
+
+    # STRICT MODE: return only the matching rows (no extra synthesis)
+    if mode == 'strict':
+        lines = []
+        for _, _, row in ranked_rows[:3]:
+            lines.append(highlight(format_row(row), question))
+        return '<br/>'.join(lines)
+
+    # SYNTHESIS MODE: return only category/reference pairs for matched rows.
+    # If the user's query is exactly a category, return only the unique references for that category
+    qnorm = normalize_text(str(question or ''))
+    # Build mapping category -> list of rows
+    category_map = {}
+    for idx, r in enumerate(EXCEL_CHAT_KB['rows']):
+        cat, ref = extract_category_reference(r)
+        if not cat:
+            cat = find_effective_category_at(idx)
+        if cat:
+            key = normalize_text(cat)
+            category_map.setdefault(key, []).append((cat, ref, r))
+
+    # exact category match first
+    if qnorm in category_map:
+        entries = category_map[qnorm]
+        seen = set()
+        parts = []
+        for cat, ref, _ in entries:
+            key = (normalize_text(cat), normalize_text(str(ref or '')))
+            if key in seen:
+                continue
+            seen.add(key)
+            frags = []
+            if cat:
+                frags.append(f"Catégorie: {escape_html(cat)}")
+            if ref:
+                frags.append(f"Référence: {escape_html(ref)}")
+            parts.append(' — '.join(frags))
+        return '<br/>'.join(parts) if parts else "Je ne trouve pas de référence pour cette catégorie."
+
+    # SYNTHESIS MODE: return only category/reference pairs for matched rows (deduplicated)
+    summary_parts = []
+    seen = set()
+    for _, (_, _, row) in enumerate(ranked_rows[:6]):
+        category, reference = extract_category_reference(row)
+        key = (normalize_text(str(category or '')), normalize_text(str(reference or '')))
+        if key in seen:
+            continue
+        seen.add(key)
+        fragments = []
+        if category:
+            fragments.append(f"Catégorie: {escape_html(category)}")
+        if reference:
+            fragments.append(f"Référence: {escape_html(reference)}")
+        row_text = ' — '.join(fragments) if fragments else highlight(format_row(row), question)
+        row_text = highlight(row_text, question)
+        summary_parts.append(row_text)
+
+    return '<br/>'.join(summary_parts) if summary_parts else "Je ne trouve pas cette information."
+
+
+@app.route('/api/chat/knowledge-base', methods=['POST'])
+def upload_chat_knowledge_base():
+    data = request.get_json() or {}
+    rows = data.get('rows')
+
+    if not isinstance(rows, list):
+        return jsonify({'error': 'Le champ "rows" doit être un tableau.'}), 400
+
+    normalized_rows = []
+    for row in rows:
+        if isinstance(row, dict):
+            normalized_row = {str(key): value for key, value in row.items()}
+            normalized_rows.append(normalized_row)
+
+    EXCEL_CHAT_KB['name'] = data.get('name').strip() if isinstance(data.get('name'), str) and data.get('name').strip() else 'Excel importé'
+    EXCEL_CHAT_KB['columns'] = [str(column) for column in data.get('columns', []) if column]
+    EXCEL_CHAT_KB['rows'] = normalized_rows
+
+    # Persist KB to server/data/knowledge.json so it's preloaded on restart
+    try:
+        data_dir = Path(__file__).resolve().parent / 'data'
+        data_dir.mkdir(exist_ok=True)
+        out_path = data_dir / 'knowledge.json'
+        with out_path.open('w', encoding='utf-8') as f:
+            json.dump({
+                'name': EXCEL_CHAT_KB['name'],
+                'columns': EXCEL_CHAT_KB['columns'],
+                'rows': EXCEL_CHAT_KB['rows'],
+            }, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"[KB PERSIST ERROR] {e}")
+
+    return jsonify({
+        'message': 'Base Excel chargée',
+        'name': EXCEL_CHAT_KB['name'],
+        'rowCount': len(EXCEL_CHAT_KB['rows']),
+        'columns': EXCEL_CHAT_KB['columns'],
+    })
+
+
+@app.route('/api/chat/knowledge-base', methods=['GET'])
+def knowledge_base_status():
+    loaded = bool(EXCEL_CHAT_KB.get('rows'))
+    return jsonify({
+        'loaded': loaded,
+        'name': EXCEL_CHAT_KB.get('name'),
+        'rowCount': len(EXCEL_CHAT_KB.get('rows', [])),
+        'columns': EXCEL_CHAT_KB.get('columns', []),
+    })
+
+
+@app.route('/api/chat/knowledge-base/categories', methods=['GET'])
+def knowledge_base_categories():
+    # Return unique effective categories from the loaded KB (preserve order)
+    seen = set()
+    categories = []
+    rows = EXCEL_CHAT_KB.get('rows', [])
+    def extract_cat_at(i):
+        # find effective category for row i
+        for j in range(i, -1, -1):
+            r = rows[j]
+            # similar logic to extract_category_reference
+            for key, value in r.items():
+                if value is None:
+                    continue
+                key_norm = normalize_text(str(key))
+                if any(k in key_norm for k in ['categorie', 'category', 'cat', 'specialite']):
+                    text = str(value).strip()
+                    if text:
+                        return text
+        return None
+
+    for idx, r in enumerate(rows):
+        cat = extract_cat_at(idx)
+        if cat and cat not in seen:
+            seen.add(cat)
+            categories.append(cat)
+
+    return jsonify({'categories': categories})
+
+
+@app.route('/api/chat', methods=['POST'])
+def chat_reply():
+    data = request.get_json() or {}
+    messages = data.get('messages')
+
+    if not isinstance(messages, list):
+        return jsonify({'error': 'Le champ "messages" est requis et doit être un tableau.'}), 400
+
+    latest_user_message = None
+    for message in reversed(messages):
+        if isinstance(message, dict) and message.get('role') == 'user':
+            latest_user_message = message.get('content', '')
+            break
+
+    if not str(latest_user_message).strip():
+        return jsonify({'error': 'Un message utilisateur est requis.'}), 400
+
+    mode = data.get('mode', 'synthese')
+    return jsonify({'reply': build_excel_reply(str(latest_user_message), mode=mode)})
 
 @app.route('/users', methods=['GET'])
 def get_users():
@@ -480,44 +982,22 @@ def get_filters():
 
 @app.route('/api/data/dashboard', methods=['GET'])
 def get_dashboard_data():
-    """Get dashboard KPI data with filters from real claims table."""
+    """Get dashboard KPI data from correct line tables."""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        where_sql, params = _build_claim_filters(request.args)
+        # Count terminated lines
+        cursor.execute("SELECT COUNT(*) AS termines FROM dbo.sinistres_termines_ligne")
+        term_row = cursor.fetchone()
+        termines = int(term_row[0] or 0)
 
-        cursor.execute(
-            f"""
-            SELECT
-                COUNT(*) AS total,
-                SUM(CASE WHEN UPPER(ISNULL(code_etat, '')) IN ('TE', 'CLOSED', 'TERMINE', 'TERMINÉ') THEN 1 ELSE 0 END) AS termines,
-                SUM(CASE WHEN UPPER(ISNULL(code_etat, '')) IN ('REJETE', 'REJETE', 'RJ') THEN 1 ELSE 0 END) AS rejetes,
-                ISNULL(SUM(ISNULL(montant_rebt_dp, 0)), 0) AS total_rembourse
-            FROM dbo.claims_closed
-            {where_sql}
-            """,
-            params
-        )
-        row = cursor.fetchone()
-        total = int(row[0] or 0)
-        termines = int(row[1] or 0)
-        rejetes = int(row[2] or 0)
-        total_rembourse = float(row[3] or 0)
+        # Count non-terminated lines
+        cursor.execute("SELECT COUNT(*) AS en_cours FROM dbo.sinistre_Ter_Lignes_NO_TE")
+        nt_row = cursor.fetchone()
+        en_cours = int(nt_row[0] or 0)
 
-        cursor.execute(
-            f"""
-            SELECT
-                ISNULL(site_gestion_theo, 'N/A') AS centre,
-                COUNT(*) AS total
-            FROM dbo.claims_closed
-            {where_sql}
-            GROUP BY site_gestion_theo
-            ORDER BY total DESC
-            """,
-            params
-        )
-        par_centre = _rows_to_dicts(cursor)
+        total = termines + en_cours
 
         conn.close()
 
@@ -525,12 +1005,12 @@ def get_dashboard_data():
             'sinistres': {
                 'total': total,
                 'termines': termines,
-                'en_cours': max(total - termines, 0),
-                'rejetes': rejetes,
-                'total_soumis': total_rembourse,
-                'total_rembourse': total_rembourse
+                'en_cours': en_cours,
+                'rejetes': 0,
+                'total_soumis': 0,
+                'total_rembourse': 0
             },
-            'parCentre': par_centre
+            'parCentre': []
         })
     except Exception as e:
         print(f"[DASHBOARD ERROR] {e}")
@@ -577,61 +1057,49 @@ def get_teams():
 
 @app.route('/api/data/sinistres', methods=['GET'])
 def get_sinistres():
-    """Get active claims list from real claims table."""
+    """Get non-terminated lines from correct table."""
+    import sys
+    import traceback
+    logfile = open('C:\\Work\\DataFlow\\server\\debug_sinistres.log', 'a')
+    
+    logfile.write("[SINISTRES_START] === SINISTRES REQUEST ===\n")
+    logfile.flush()
     try:
+        logfile.write("[SINISTRES] Getting DB connection...\n")
+        logfile.flush()
         conn = get_db_connection()
+        logfile.write(f"[SINISTRES] Connection type: {type(conn)}\n")
+        logfile.flush()
+        logfile.write("[SINISTRES] Creating cursor...\n")
+        logfile.flush()
         cursor = conn.cursor()
-        cursor.execute(
-            """
-            SELECT TOP 500
-                id_sinistre,
-                num_sinistre,
-                code_etat,
-                date_survenance AS date_sinistre,
-                date_ouverture,
-                marque,
-                nom_assureur,
-                site_gestion_theo AS centre,
-                utilisateur,
-                montant_rebt_dp
-            FROM dbo.claims_closed
-            WHERE UPPER(ISNULL(code_etat, '')) NOT IN ('TE', 'CLOSED', 'TERMINE', 'TERMINÉ')
-            ORDER BY date_survenance DESC
-            """
-        )
+        logfile.write("[SINISTRES] Executing query...\n")
+        logfile.flush()
+        cursor.execute("SELECT TOP 500 * FROM dbo.sinistre_Ter_Lignes_NO_TE ORDER BY ID_Sinistre DESC")
+        logfile.write("[SINISTRES] Fetching all results...\n")
+        logfile.flush()
         sinistres = _rows_to_dicts(cursor)
+        logfile.write(f"[SINISTRES] SUCCESS! Got {len(sinistres)} rows\n")
+        logfile.flush()
         conn.close()
+        logfile.close()
         return jsonify(sinistres)
     except Exception as e:
-        print(f"[SINISTRES ERROR] {e}")
+        logfile.write(f"[SINISTRES ERROR] Exception occurred: {e}\n")
+        logfile.write(f"[SINISTRES ERROR] Full traceback:\n")
+        traceback.print_exc(file=logfile)
+        logfile.flush()
+        logfile.close()
         return jsonify([])
 
 
 @app.route('/api/data/sinistres-termines', methods=['GET'])
 def get_sinistres_termines():
-    """Get closed claims list from real claims table."""
+    """Get terminated lines from correct table."""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute(
-            """
-            SELECT TOP 1000
-                id_sinistre,
-                num_sinistre,
-                code_etat,
-                date_survenance AS date_sinistre,
-                date_ouverture,
-                date_cloture,
-                marque,
-                nom_assureur,
-                site_gestion_theo AS centre,
-                utilisateur,
-                montant_rebt_dp
-            FROM dbo.claims_closed
-            WHERE UPPER(ISNULL(code_etat, '')) IN ('TE', 'CLOSED', 'TERMINE', 'TERMINÉ')
-            ORDER BY date_cloture DESC
-            """
-        )
+        cursor.execute("SELECT TOP 1000 * FROM dbo.sinistres_termines_ligne ORDER BY ID_Sinistre DESC")
         sinistres = _rows_to_dicts(cursor)
         conn.close()
         return jsonify(sinistres)

@@ -47,9 +47,192 @@ const DEFAULT_DASHBOARD_FILTERS = {
 };
 
 const TEAM_FALLBACK = [];
-const filterClaimsByDashboard = (rows /*, state */) =>
-  Array.isArray(rows) ? rows : [];
-const buildAgingSummary = (rows /* array */) => ({ over10: 0 });
+const normText = (v) =>
+  String(v ?? "")
+    .trim()
+    .toLowerCase();
+
+const getRowValueByKeys = (row, exactKeys = [], keyIncludes = []) => {
+  if (!row || typeof row !== "object") return "";
+
+  for (const k of exactKeys) {
+    if (row[k] != null && String(row[k]).trim() !== "") return row[k];
+  }
+
+  const loweredExact = exactKeys.map((k) => normText(k));
+  const entries = Object.entries(row);
+
+  for (const [k, v] of entries) {
+    if (v == null || String(v).trim() === "") continue;
+    if (loweredExact.includes(normText(k))) return v;
+  }
+
+  for (const [k, v] of entries) {
+    if (v == null || String(v).trim() === "") continue;
+    const lk = normText(k);
+    if (keyIncludes.some((p) => lk.includes(normText(p)))) return v;
+  }
+
+  return "";
+};
+
+const getSinistreId = (row) =>
+  getRowValueByKeys(
+    row,
+    ["ID_Sinistre", "id_sinistre", "Num_Sinistre", "num_sinistre"],
+    ["id_sinistre", "num_sinistre", "sinistre"],
+  );
+
+const getLigneId = (row) =>
+  getRowValueByKeys(
+    row,
+    ["ID_Ligne", "id_ligne", "Num_Ligne", "num_ligne"],
+    ["id_ligne", "num_ligne", "ligne"],
+  );
+
+const getRowDate = (row) =>
+  getRowValueByKeys(
+    row,
+    ["date_sinistre", "Date_Sinistre", "date", "Date"],
+    ["date"],
+  );
+
+const getLineKey = (row) => {
+  const sid = String(getSinistreId(row) ?? "").trim();
+  const lid = String(getLigneId(row) ?? "").trim();
+  const num = String(
+    getRowValueByKeys(
+      row,
+      ["Num_Sinistre", "num_sinistre"],
+      ["num_sinistre"],
+    ) ?? "",
+  ).trim();
+
+  if (sid && lid) return `${sid}::${lid}`;
+  if (sid && num) return `${sid}::${num}`;
+  if (lid) return `L::${lid}`;
+  if (sid) return `S::${sid}`;
+
+  // Fallback: stable key from sorted row entries
+  const stable = Object.entries(row || {})
+    .sort(([a], [b]) => String(a).localeCompare(String(b)))
+    .map(([k, v]) => `${k}:${String(v ?? "").trim()}`)
+    .join("|");
+  return `ROW::${stable}`;
+};
+
+const dedupeByLineKey = (rows) => {
+  const map = new Map();
+  (rows || []).forEach((row) => {
+    const key = getLineKey(row);
+    if (!map.has(key)) map.set(key, row);
+  });
+  return Array.from(map.values());
+};
+
+const parseDateSafe = (value) => {
+  if (!value) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+};
+
+const filterClaimsByDashboard = (rows, state) => {
+  if (!Array.isArray(rows)) return [];
+  const selectedCentres = (state?.centresSelectionnes || []).filter(
+    (c) => c !== "Sélectionner tout",
+  );
+  const from = parseDateSafe(state?.dateDebut);
+  const to = parseDateSafe(state?.dateFin);
+  if (to) to.setHours(23, 59, 59, 999);
+
+  return rows.filter((row) => {
+    const centre = normText(
+      getRowValueByKeys(
+        row,
+        ["centre", "Centre", "SITE_GESTION_THEO", "site_gestion_theo"],
+        ["centre", "site_gestion", "team"],
+      ),
+    );
+    const marque = normText(
+      getRowValueByKeys(row, ["MARQUE", "Marque", "marque"], ["marque"]),
+    );
+    const assureur = normText(
+      getRowValueByKeys(
+        row,
+        ["Nom_Assureur", "nom_assureur", "assureur"],
+        ["assureur"],
+      ),
+    );
+    const team = normText(getRowValueByKeys(row, ["team", "Team"], ["team"]));
+    const agent = normText(
+      getRowValueByKeys(
+        row,
+        ["name_agent", "Name_Agent", "agent", "Agent"],
+        ["agent"],
+      ),
+    );
+
+    if (selectedCentres.length > 0) {
+      const selected = selectedCentres.map(normText);
+      if (!selected.includes(centre)) return false;
+    }
+    if (
+      state?.marque &&
+      state.marque !== "Tout" &&
+      marque !== normText(state.marque)
+    ) {
+      return false;
+    }
+    if (
+      state?.nomAssureur &&
+      state.nomAssureur !== "Tout" &&
+      assureur !== normText(state.nomAssureur)
+    ) {
+      return false;
+    }
+    if (state?.team && state.team !== "Tout" && team !== normText(state.team)) {
+      return false;
+    }
+    if (
+      state?.nameAgent &&
+      state.nameAgent !== "Tout" &&
+      agent !== normText(state.nameAgent)
+    ) {
+      return false;
+    }
+
+    if (from || to) {
+      const d = parseDateSafe(getRowDate(row));
+      if (d) {
+        if (from && d < from) return false;
+        if (to && d > to) return false;
+      }
+    }
+
+    return true;
+  });
+};
+
+const buildAgingSummary = (rows /* array */) => {
+  const now = new Date();
+  const msDay = 24 * 60 * 60 * 1000;
+  const over10 = (rows || []).reduce((acc, row) => {
+    const d = parseDateSafe(getRowDate(row));
+    if (!d) return acc;
+    const ageDays = Math.floor((now - d) / msDay);
+    return ageDays > 10 ? acc + 1 : acc;
+  }, 0);
+  return { over10 };
+};
+
+const countDistinct = (rows, keyGetter) => {
+  const set = new Set();
+  (rows || []).forEach((row, idx) => {
+    const key = String(keyGetter(row, idx) ?? "").trim();
+    if (key) set.add(key);
+  });
+  return set.size;
+};
 const getRowField = (row, keys) => {
   for (const k of keys) if (row && row[k] != null) return row[k];
   return "";
@@ -124,6 +307,7 @@ export default function Dashboard() {
   const [providerCenters, setProviderCenters] = useState([]);
   const [insuredCenters, setInsuredCenters] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [sinistreViewMode, setSinistreViewMode] = useState("all"); // 'all', 'simples', 'lignes'
 
   const CENTRES = useMemo(() => {
     const source =
@@ -397,6 +581,8 @@ export default function Dashboard() {
     dateFin,
     marque,
     nomAssureur,
+    team,
+    nameAgent,
   };
 
   const filteredRawSinistres = useMemo(
@@ -459,9 +645,43 @@ export default function Dashboard() {
   ];
 
   const sinistres = stats?.sinistres || {};
-  const totalSinistres = sinistres.total || 0;
-  const termines = sinistres.termines || 0;
-  const enCours = sinistres.en_cours || 0;
+  const allFilteredRows = useMemo(
+    () =>
+      dedupeByLineKey([
+        ...filteredRawSinistres,
+        ...filteredRawSinistresTermines,
+      ]),
+    [filteredRawSinistres, filteredRawSinistresTermines],
+  );
+
+  const distinctSinistresEnCours = useMemo(
+    () => countDistinct(filteredRawSinistres, (row) => getSinistreId(row)),
+    [filteredRawSinistres],
+  );
+  const distinctSinistresTermines = useMemo(
+    () =>
+      countDistinct(filteredRawSinistresTermines, (row) => getSinistreId(row)),
+    [filteredRawSinistresTermines],
+  );
+  const distinctSinistresTotal = useMemo(
+    () => countDistinct(allFilteredRows, (row) => getSinistreId(row)),
+    [allFilteredRows],
+  );
+
+  const distinctLignesEnCours = filteredRawSinistres.length;
+  const distinctLignesTermines = filteredRawSinistresTermines.length;
+  const distinctLignesTotal = allFilteredRows.length;
+
+  const hasRawCounts = allFilteredRows.length > 0;
+  const totalSinistres = hasRawCounts
+    ? distinctLignesTotal
+    : sinistres.total || 0;
+  const termines = hasRawCounts
+    ? distinctLignesTermines
+    : sinistres.termines || 0;
+  const enCours = hasRawCounts
+    ? distinctLignesEnCours
+    : sinistres.en_cours || 0;
   const totalSoumis = sinistres.total_soumis || 0;
   const totalRembourse = sinistres.total_rembourse || 0;
   const totalRejetes = sinistres.rejetes || 0;
@@ -475,21 +695,21 @@ export default function Dashboard() {
       return {
         ...item,
         value: totalSinistres.toLocaleString(),
-        meta: `dont ${totalRejetes.toLocaleString()} rejetés`,
+        meta: `${distinctSinistresTotal.toLocaleString()} sinistres uniques • ${totalRejetes.toLocaleString()} rejetés`,
       };
     }
     if (item.key === "termines") {
       return {
         ...item,
         value: `${termines.toLocaleString()}`,
-        meta: `Taux de clôture ${rateCloture}%`,
+        meta: `Taux de clôture ${rateCloture}% • ${distinctSinistresTermines.toLocaleString()} sinistres uniques`,
       };
     }
     if (item.key === "enCours") {
       return {
         ...item,
         value: enCours.toLocaleString(),
-        meta: `${stockEnCoursSummary.over10} dossiers >10 jours`,
+        meta: `${stockEnCoursSummary.over10} dossiers >10 jours • ${distinctSinistresEnCours.toLocaleString()} sinistres uniques`,
       };
     }
     return {
@@ -538,6 +758,88 @@ export default function Dashboard() {
     e.target.value = "";
   };
 
+  // Calculate data based on view mode
+  const simpleSinistresData = useMemo(() => {
+    // Use raw data without filters to see all database records
+    const allRows = [...rawSinistres, ...rawSinistresTermines];
+    const uniqueSinistres = new Map();
+    allRows.forEach((row) => {
+      const id = getSinistreId(row);
+      if (id && !uniqueSinistres.has(id)) {
+        uniqueSinistres.set(id, row);
+      }
+    });
+    return Array.from(uniqueSinistres.values());
+  }, [rawSinistres, rawSinistresTermines]);
+
+  const lignesData = useMemo(() => {
+    // Show ALL raw lines without any filtering to see actual DB data
+    // No deduplication, no filtering - just raw data from the database
+    return [...rawSinistres, ...rawSinistresTermines];
+  }, [rawSinistres, rawSinistresTermines]);
+
+  // Calculate KPIs for simples mode
+  const simpleSinistresKPIs = useMemo(() => {
+    const total = simpleSinistresData.length;
+    const termines = simpleSinistresData.filter(
+      (r) => String(r.Code_Etat || r.code_etat || "").toUpperCase() === "TE",
+    ).length;
+    const enCours = total - termines;
+    const totalMontant = simpleSinistresData.reduce(
+      (sum, r) => sum + Number(r.montant_rebt_dp || 0),
+      0,
+    );
+    return {
+      total,
+      termines,
+      enCours,
+      totalMontant,
+      rateCloture: total > 0 ? Math.round((termines / total) * 100) : 0,
+    };
+  }, [simpleSinistresData]);
+
+  // Calculate KPIs for lignes mode
+  const lignesKPIs = useMemo(() => {
+    const total = lignesData.length;
+    const termines = lignesData.filter(
+      (r) => String(r.Code_Etat || r.code_etat || "").toUpperCase() === "TE",
+    ).length;
+    const enCours = total - termines;
+    const totalMontant = lignesData.reduce(
+      (sum, r) => sum + Number(r.montant_rebt_dp || 0),
+      0,
+    );
+    return {
+      total,
+      termines,
+      enCours,
+      totalMontant,
+      rateCloture: total > 0 ? Math.round((termines / total) * 100) : 0,
+    };
+  }, [lignesData]);
+
+  // Select KPIs based on view mode
+  const displayedKPIs = useMemo(() => {
+    if (sinistreViewMode === "simples") return simpleSinistresKPIs;
+    if (sinistreViewMode === "lignes") return lignesKPIs;
+    return {
+      total: totalSinistres,
+      termines,
+      enCours,
+      totalMontant: totalRembourse,
+      rateCloture,
+    };
+  }, [
+    sinistreViewMode,
+    simpleSinistresKPIs,
+    lignesKPIs,
+    totalSinistres,
+    termines,
+    enCours,
+    totalRembourse,
+    rateCloture,
+  ]);
+
   // Exports and rendering from your partner's code...
   // Updated to avoid recharts dependency; using simple HTML/CSS visualizations instead
   return (
@@ -576,9 +878,12 @@ export default function Dashboard() {
                       `export_sinistres_${new Date().getTime()}.xlsx`,
                     );
                   }}
-                  className="rounded-xl border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white/20"
+                  className="rounded-xl border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white/20 flex items-center gap-2"
                 >
-                  📥 Excel
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                  </svg>
+                  Excel
                 </button>
                 <button
                   onClick={() => {
@@ -602,9 +907,12 @@ export default function Dashboard() {
                     });
                     doc.save(`export_pdf_${new Date().getTime()}.pdf`);
                   }}
-                  className={PRIMARY_BUTTON}
+                  className={PRIMARY_BUTTON + " flex items-center gap-2"}
                 >
-                  📄 PDF
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-8-6z" />
+                  </svg>
+                  PDF
                 </button>
               </div>
             </div>
@@ -628,8 +936,15 @@ export default function Dashboard() {
             className="w-full"
           >
             <div className="flex items-center gap-4 p-6">
-              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 text-xl">
-                🔍
+              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
+                <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                  <path d="M10 12a2 2 0 1 0 4 0 2 2 0 0 0-4 0z" />
+                  <path
+                    fillRule="evenodd"
+                    d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
               </div>
               <div className="flex-1 text-left">
                 <div className="flex items-center gap-3">
@@ -658,9 +973,11 @@ export default function Dashboard() {
                 </p>
               </div>
               <div
-                className={`text-2xl text-blue-600 transition-transform duration-300 ${showFilters ? "rotate-180" : ""}`}
+                className={`text-blue-600 transition-transform duration-300 ${showFilters ? "rotate-180" : ""}`}
               >
-                ▼
+                <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                  <path d="M7 10l5 5 5-5z" />
+                </svg>
               </div>
             </div>
           </button>
@@ -675,7 +992,8 @@ export default function Dashboard() {
                   centresSelectionnes.forEach((c) =>
                     activeFilters.push({
                       type: "centre",
-                      label: "📍 " + c,
+                      label: c,
+                      icon: "location",
                       value: c,
                     }),
                   );
@@ -683,37 +1001,43 @@ export default function Dashboard() {
                 if (dateDebut)
                   activeFilters.push({
                     type: "dateDebut",
-                    label: "📅 De: " + dateDebut,
+                    label: "De: " + dateDebut,
+                    icon: "calendar",
                     value: dateDebut,
                   });
                 if (dateFin)
                   activeFilters.push({
                     type: "dateFin",
-                    label: "📅 Au: " + dateFin,
+                    label: "Au: " + dateFin,
+                    icon: "calendar",
                     value: dateFin,
                   });
                 if (marque !== "Tout")
                   activeFilters.push({
                     type: "marque",
-                    label: "🏷️ " + marque,
+                    label: marque,
+                    icon: "tag",
                     value: marque,
                   });
                 if (nomAssureur !== "Tout")
                   activeFilters.push({
                     type: "nomAssureur",
-                    label: "🛡️ " + nomAssureur,
+                    label: nomAssureur,
+                    icon: "shield",
                     value: nomAssureur,
                   });
                 if (team !== "Tout")
                   activeFilters.push({
                     type: "team",
-                    label: "👥 " + team,
+                    label: team,
+                    icon: "users",
                     value: team,
                   });
                 if (nameAgent !== "Tout")
                   activeFilters.push({
                     type: "nameAgent",
-                    label: "👤 " + nameAgent,
+                    label: nameAgent,
+                    icon: "user",
                     value: nameAgent,
                   });
 
@@ -728,6 +1052,30 @@ export default function Dashboard() {
                           key={idx}
                           className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-full border border-blue-200 shadow-sm hover:shadow-md transition-all"
                         >
+                          <svg
+                            className="w-3.5 h-3.5 text-blue-600"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                          >
+                            {filter.icon === "location" && (
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5z" />
+                            )}
+                            {filter.icon === "calendar" && (
+                              <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z" />
+                            )}
+                            {filter.icon === "tag" && (
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6z" />
+                            )}
+                            {filter.icon === "shield" && (
+                              <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
+                            )}
+                            {filter.icon === "users" && (
+                              <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.64 2.2 1.56 2.93 2.55 1.23-.64 2.04-1.63 2.04-2.6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+                            )}
+                            {filter.icon === "user" && (
+                              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                            )}
+                          </svg>
                           <span className="text-sm font-medium text-slate-700">
                             {filter.label}
                           </span>
@@ -749,9 +1097,9 @@ export default function Dashboard() {
                               else if (filter.type === "nameAgent")
                                 setNameAgent("Tout");
                             }}
-                            className="text-slate-400 hover:text-red-500 font-bold transition-colors"
+                            className="text-slate-400 hover:text-red-500 font-bold transition-colors text-lg leading-none"
                           >
-                            ✕
+                            ×
                           </button>
                         </div>
                       ))}
@@ -763,7 +1111,13 @@ export default function Dashboard() {
               {/* Centres - Visual Button Grid */}
               <div>
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="text-lg">📍</span>
+                  <svg
+                    className="w-5 h-5 text-slate-700"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
+                  </svg>
                   <label className="block text-sm font-bold text-slate-800 uppercase tracking-wide">
                     Centres Opérationnels
                   </label>
@@ -780,7 +1134,7 @@ export default function Dashboard() {
                     <button
                       key={centre}
                       onClick={() => toggleCentre(centre)}
-                      className={`px-4 py-3.5 rounded-xl font-semibold text-sm transition-all border-2 duration-200 ${
+                      className={`px-4 py-3.5 rounded-xl font-semibold text-sm transition-all border-2 duration-200 flex items-center justify-center gap-2 ${
                         centresSelectionnes.includes(centre)
                           ? centre === "Sélectionner tout"
                             ? "border-blue-500 bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md hover:shadow-lg"
@@ -789,7 +1143,12 @@ export default function Dashboard() {
                       }`}
                     >
                       {centresSelectionnes.includes(centre) && (
-                        <span className="font-bold">✓ </span>
+                        <svg
+                          className="w-4 h-4 fill-current"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                        </svg>
                       )}
                       {centre === "Sélectionner tout" ? "Tous" : centre}
                     </button>
@@ -800,7 +1159,13 @@ export default function Dashboard() {
               {/* Date Range - Card Style */}
               <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl p-6 border border-orange-100">
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="text-lg">📅</span>
+                  <svg
+                    className="w-5 h-5 text-orange-600"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z" />
+                  </svg>
                   <label className="block text-sm font-bold text-slate-800 uppercase tracking-wide">
                     Période d'Analyse
                   </label>
@@ -819,8 +1184,14 @@ export default function Dashboard() {
                       />
                     </div>
                     {dateDebut && (
-                      <div className="mt-2 inline-block px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full font-medium">
-                        ✓ À partir du{" "}
+                      <div className="mt-2 inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full font-medium">
+                        <svg
+                          className="w-3 h-3 fill-current"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                        </svg>
+                        À partir du{" "}
                         {new Date(dateDebut).toLocaleDateString("fr-FR")}
                       </div>
                     )}
@@ -838,9 +1209,14 @@ export default function Dashboard() {
                       />
                     </div>
                     {dateFin && (
-                      <div className="mt-2 inline-block px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full font-medium">
-                        ✓ Jusqu'au{" "}
-                        {new Date(dateFin).toLocaleDateString("fr-FR")}
+                      <div className="mt-2 inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded-full font-medium">
+                        <svg
+                          className="w-3 h-3 fill-current"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                        </svg>
+                        Jusqu'au {new Date(dateFin).toLocaleDateString("fr-FR")}
                       </div>
                     )}
                   </div>
@@ -850,7 +1226,13 @@ export default function Dashboard() {
               {/* Marque & Assureur - Card Style */}
               <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl p-6 border border-purple-100">
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="text-lg">🏷️</span>
+                  <svg
+                    className="w-5 h-5 text-purple-600"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
+                  </svg>
                   <label className="block text-sm font-bold text-slate-800 uppercase tracking-wide">
                     Critères Métier
                   </label>
@@ -874,12 +1256,23 @@ export default function Dashboard() {
                         ))}
                       </select>
                       <div className="absolute right-3 top-3.5 pointer-events-none text-purple-600 font-bold">
-                        ▼
+                        <svg
+                          className="w-4 h-4 fill-current"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M7 10l5 5 5-5z" />
+                        </svg>
                       </div>
                     </div>
                     {marque !== "Tout" && (
-                      <div className="mt-2 inline-block px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full font-medium">
-                        ✓ {marque}
+                      <div className="mt-2 inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full font-medium">
+                        <svg
+                          className="w-3 h-3 fill-current"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                        </svg>
+                        {marque}
                       </div>
                     )}
                   </div>
@@ -901,12 +1294,23 @@ export default function Dashboard() {
                         ))}
                       </select>
                       <div className="absolute right-3 top-3.5 pointer-events-none text-purple-600 font-bold">
-                        ▼
+                        <svg
+                          className="w-4 h-4 fill-current"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M7 10l5 5 5-5z" />
+                        </svg>
                       </div>
                     </div>
                     {nomAssureur !== "Tout" && (
-                      <div className="mt-2 inline-block px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full font-medium">
-                        ✓ {nomAssureur}
+                      <div className="mt-2 inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full font-medium">
+                        <svg
+                          className="w-3 h-3 fill-current"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                        </svg>
+                        {nomAssureur}
                       </div>
                     )}
                   </div>
@@ -916,7 +1320,13 @@ export default function Dashboard() {
               {/* Team & Agent - Card Style */}
               <div className="bg-gradient-to-br from-green-50 to-teal-50 rounded-2xl p-6 border border-green-100">
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="text-lg">👥</span>
+                  <svg
+                    className="w-5 h-5 text-green-600"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.64 2.2 1.56 2.93 2.55 1.23-.64 2.04-1.63 2.04-2.6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+                  </svg>
                   <label className="block text-sm font-bold text-slate-800 uppercase tracking-wide">
                     Équipe & Agent
                   </label>
@@ -940,12 +1350,23 @@ export default function Dashboard() {
                         ))}
                       </select>
                       <div className="absolute right-3 top-3.5 pointer-events-none text-green-600 font-bold">
-                        ▼
+                        <svg
+                          className="w-4 h-4 fill-current"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M7 10l5 5 5-5z" />
+                        </svg>
                       </div>
                     </div>
                     {team !== "Tout" && (
-                      <div className="mt-2 inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
-                        ✓ {team}
+                      <div className="mt-2 inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+                        <svg
+                          className="w-3 h-3 fill-current"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                        </svg>
+                        {team}
                       </div>
                     )}
                   </div>
@@ -967,12 +1388,23 @@ export default function Dashboard() {
                         ))}
                       </select>
                       <div className="absolute right-3 top-3.5 pointer-events-none text-green-600 font-bold">
-                        ▼
+                        <svg
+                          className="w-4 h-4 fill-current"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M7 10l5 5 5-5z" />
+                        </svg>
                       </div>
                     </div>
                     {nameAgent !== "Tout" && (
-                      <div className="mt-2 inline-block px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
-                        ✓ {nameAgent}
+                      <div className="mt-2 inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+                        <svg
+                          className="w-3 h-3 fill-current"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                        </svg>
+                        {nameAgent}
                       </div>
                     )}
                   </div>
@@ -983,9 +1415,12 @@ export default function Dashboard() {
               <div className="flex flex-wrap gap-3 pt-6 border-t border-blue-100">
                 <button
                   onClick={resetDashboardFilters}
-                  className="px-6 py-2.5 rounded-xl border-2 border-red-300 bg-gradient-to-r from-red-50 to-orange-50 text-red-700 font-semibold text-sm hover:from-red-100 hover:to-orange-100 hover:shadow-md transition-all duration-200"
+                  className="px-6 py-2.5 rounded-xl border-2 border-red-300 bg-gradient-to-r from-red-50 to-orange-50 text-red-700 font-semibold text-sm hover:from-red-100 hover:to-orange-100 hover:shadow-md transition-all duration-200 flex items-center gap-2"
                 >
-                  🔄 Réinitialiser
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z" />
+                  </svg>
+                  Réinitialiser
                 </button>
               </div>
             </div>
@@ -993,6 +1428,48 @@ export default function Dashboard() {
         </div>
 
         {/* KPI Cards Section */}
+        {/* View Mode Toggle Buttons */}
+        <div className="flex gap-3 flex-wrap">
+          <button
+            onClick={() => setSinistreViewMode("all")}
+            className={`px-8 py-3.5 rounded-lg font-bold transition-all text-base flex items-center gap-2 ${
+              sinistreViewMode === "all"
+                ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg scale-105"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+            }`}
+          >
+            <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+              <path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z" />
+            </svg>
+            Tous les Sinistres
+          </button>
+          <button
+            onClick={() => setSinistreViewMode("simples")}
+            className={`px-8 py-3.5 rounded-lg font-bold transition-all text-base flex items-center gap-2 ${
+              sinistreViewMode === "simples"
+                ? "bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg scale-105"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+            }`}
+          >
+            <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-8-6z" />
+            </svg>
+            Sinistres Simples
+          </button>
+          <button
+            onClick={() => setSinistreViewMode("lignes")}
+            className={`px-8 py-3.5 rounded-lg font-bold transition-all text-base flex items-center gap-2 ${
+              sinistreViewMode === "lignes"
+                ? "bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg scale-105"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+            }`}
+          >
+            <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
+            </svg>
+            Sinistres Lignes
+          </button>
+        </div>
         <div className="grid gap-6 bg-slate-50 p-8 sm:grid-cols-2 xl:grid-cols-4 rounded-2xl">
           {loading
             ? KPI_META.map((item) => (
@@ -1008,7 +1485,32 @@ export default function Dashboard() {
                   <div className="mt-4 h-4 w-3/4 rounded bg-slate-200" />
                 </div>
               ))
-            : kpiCards.map((item) => (
+            : [
+                {
+                  label: `Total ${sinistreViewMode === "simples" ? "Sinistres" : "Lignes"}`,
+                  value: displayedKPIs.total.toLocaleString(),
+                  tone: "text-blue-600",
+                  meta: `Ensemble des ${sinistreViewMode === "simples" ? "sinistres uniques" : "lignes"}`,
+                },
+                {
+                  label: "Terminés",
+                  value: displayedKPIs.termines.toLocaleString(),
+                  tone: "text-emerald-600",
+                  meta: `Taux de clôture ${displayedKPIs.rateCloture}%`,
+                },
+                {
+                  label: "En cours",
+                  value: displayedKPIs.enCours.toLocaleString(),
+                  tone: "text-orange-500",
+                  meta: `Dossiers en traitement`,
+                },
+                {
+                  label: "Montant Total",
+                  value: `${(displayedKPIs.totalMontant / 1000).toFixed(1)}K€`,
+                  tone: "text-purple-600",
+                  meta: `Montant remboursé`,
+                },
+              ].map((item) => (
                 <div
                   key={item.label}
                   className={`${KPI_CARD} min-h-[190px] p-6`}
@@ -1022,9 +1524,6 @@ export default function Dashboard() {
                     >
                       {item.value}
                     </p>
-                    <span className={`${METRIC_BADGE} ${item.badgeClass}`}>
-                      {item.badge}
-                    </span>
                   </div>
                   <p className="mt-4 text-base leading-7 text-slate-500">
                     {item.meta}
@@ -1032,6 +1531,166 @@ export default function Dashboard() {
                 </div>
               ))}
         </div>
+        <div className="-mt-2 px-2 text-xs text-slate-500">
+          {sinistreViewMode === "simples" &&
+            "Vue Sinistres Simples: affichage des sinistres uniques groupés par ID_Sinistre."}
+          {sinistreViewMode === "lignes" &&
+            "Vue Sinistres Lignes: affichage de toutes les lignes (4 TE + 3 non-TE)."}
+          {sinistreViewMode === "all" &&
+            "Les KPI sinistres sont calculés par ID unique (`ID_Sinistre`). Les lignes sont affichées séparément quand un sinistre contient plusieurs `ID_Ligne`."}
+        </div>
+
+        {/* Data Display Section based on Mode */}
+        {sinistreViewMode !== "all" && (
+          <div className={PANEL_WRAPPER}>
+            <div className={PANEL_HEADER}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className={PANEL_TITLE}>
+                    {sinistreViewMode === "simples"
+                      ? "Sinistres Uniques"
+                      : "Sinistres Lignes"}
+                  </h2>
+                  <p className={PANEL_DESC}>
+                    {sinistreViewMode === "simples"
+                      ? "Liste des sinistres groupés par ID_Sinistre"
+                      : "Liste de toutes les lignes (4 TE + 3 non-TE)"}
+                  </p>
+                </div>
+                <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                  {sinistreViewMode === "simples"
+                    ? simpleSinistresData.length
+                    : lignesData.length}{" "}
+                  résultats
+                </div>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className={TABLE_SHELL + " w-full"}>
+                {sinistreViewMode === "simples" ? (
+                  <>
+                    <thead>
+                      <tr>
+                        <th className={TABLE_HEAD}>ID Sinistre</th>
+                        <th className={TABLE_HEAD}>Centre</th>
+                        <th className={TABLE_HEAD}>Marque</th>
+                        <th className={TABLE_HEAD}>Assureur</th>
+                        <th className={TABLE_HEAD}>État</th>
+                        <th className={TABLE_HEAD}>Montant</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {simpleSinistresData.map((row, idx) => (
+                        <tr key={idx} className={TABLE_ROW}>
+                          <td className="px-4 py-3 font-semibold text-slate-800">
+                            {getSinistreId(row) || "—"}
+                          </td>
+                          <td className="px-4 py-3 text-slate-700">
+                            {getRowValueByKeys(
+                              row,
+                              ["centre", "site_gestion_theo"],
+                              ["centre"],
+                            ) || "—"}
+                          </td>
+                          <td className="px-4 py-3 text-slate-700">
+                            {getRowValueByKeys(
+                              row,
+                              ["MARQUE", "marque"],
+                              ["marque"],
+                            ) || "—"}
+                          </td>
+                          <td className="px-4 py-3 text-slate-700">
+                            {getRowValueByKeys(
+                              row,
+                              ["nom_assureur", "Nom_Assureur"],
+                              ["assureur"],
+                            ) || "—"}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                                String(
+                                  row.Code_Etat || row.code_etat || "",
+                                ).toUpperCase() === "TE"
+                                  ? "bg-red-100 text-red-800"
+                                  : "bg-green-100 text-green-800"
+                              }`}
+                            >
+                              {String(
+                                row.Code_Etat || row.code_etat || "—",
+                              ).toUpperCase()}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right font-semibold text-slate-800">
+                            {Number(row.montant_rebt_dp || 0).toLocaleString()}{" "}
+                            €
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </>
+                ) : (
+                  <>
+                    <thead>
+                      <tr>
+                        <th className={TABLE_HEAD}>ID Sinistre</th>
+                        <th className={TABLE_HEAD}>ID Ligne</th>
+                        <th className={TABLE_HEAD}>Centre</th>
+                        <th className={TABLE_HEAD}>État</th>
+                        <th className={TABLE_HEAD}>Type</th>
+                        <th className={TABLE_HEAD}>Montant</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lignesData.map((row, idx) => (
+                        <tr key={idx} className={TABLE_ROW}>
+                          <td className="px-4 py-3 font-semibold text-slate-800">
+                            {getSinistreId(row) || "—"}
+                          </td>
+                          <td className="px-4 py-3 text-slate-700">
+                            {getLigneId(row) || "—"}
+                          </td>
+                          <td className="px-4 py-3 text-slate-700">
+                            {getRowValueByKeys(
+                              row,
+                              ["centre", "site_gestion_theo"],
+                              ["centre"],
+                            ) || "—"}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                                String(
+                                  row.Code_Etat || row.code_etat || "",
+                                ).toUpperCase() === "TE"
+                                  ? "bg-red-100 text-red-800"
+                                  : "bg-blue-100 text-blue-800"
+                              }`}
+                            >
+                              {String(
+                                row.Code_Etat || row.code_etat || "—",
+                              ).toUpperCase()}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-slate-700">
+                            {String(
+                              row.TYPE_SINISTRE || row.type_sinistre || "—",
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-right font-semibold text-slate-800">
+                            {Number(row.montant_rebt_dp || 0).toLocaleString()}{" "}
+                            €
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </>
+                )}
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* Stock Tables Section */}
         <div className="grid gap-6 xl:grid-cols-2">

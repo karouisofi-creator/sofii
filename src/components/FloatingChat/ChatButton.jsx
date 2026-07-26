@@ -1,62 +1,53 @@
 export default function ChatButton({ open, setOpen, unread }) {
   return (
-    <>
+    <div style={{ position: "relative", display: "inline-block" }}>
       <button
-        className="df-fab"
+        aria-label="Assistant DataFlow"
         onClick={() => setOpen(!open)}
         style={{
-          width: 56,
-          height: 56,
+          width: 60,
+          height: 60,
           borderRadius: "50%",
-          background: "linear-gradient(135deg, #059669 0%, #065f46 100%)",
+          background: open
+            ? "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)"
+            : "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
           border: "none",
           cursor: "pointer",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          transition: "transform 0.2s",
-          animation: !open ? "df-pulse 2.5s infinite" : "none",
-          boxShadow: "0 4px 20px rgba(5,150,105,0.45)",
+          transition: "all 0.2s ease",
+          transform: open ? "scale(0.96)" : "scale(1)",
+          boxShadow: open
+            ? "0 10px 30px rgba(2, 6, 23, 0.25)"
+            : "0 12px 40px rgba(37, 99, 235, 0.25)",
+        }}
+        onMouseEnter={(e) => {
+          if (!open) {
+            e.target.style.transform = "scale(1.08)";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!open) {
+            e.target.style.transform = "scale(1)";
+          }
         }}
         title="Assistant DataFlow"
       >
-        {open ? (
-          <svg
-            width="26"
-            height="26"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="white"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        ) : (
-          <svg
-            width="26"
-            height="26"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="white"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-          </svg>
-        )}
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+          <path d="M13 2L3 14h7l-1 8L21 10h-7l-1-8z" />
+        </svg>
       </button>
+
       {unread > 0 && !open && (
         <div
           style={{
             position: "absolute",
-            top: -4,
-            right: -4,
-            width: 20,
-            height: 20,
+            top: -8,
+            right: -8,
+            minWidth: 24,
+            height: 24,
+            padding: "0 6px",
             borderRadius: "50%",
             background: "#ef4444",
             color: "#fff",
@@ -66,11 +57,12 @@ export default function ChatButton({ open, setOpen, unread }) {
             alignItems: "center",
             justifyContent: "center",
             border: "2px solid white",
+            boxShadow: "0 4px 12px rgba(239, 68, 68, 0.3)",
           }}
         >
-          {unread}
+          {unread > 9 ? "9+" : unread}
         </div>
       )}
-    </>
+    </div>
   );
 }

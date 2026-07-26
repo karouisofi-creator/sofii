@@ -1,5 +1,6 @@
 {
-    "python.globalModuleInstallation": true,
-    "python.analysis.enableTroubleshootMissingImports": true,
-    "python.analysis.includeVenvInWorkspaceSymbols": true
+  "python.globalModuleInstallation": true,
+  "python.analysis.enableTroubleshootMissingImports": true,
+  "python.analysis.includeVenvInWorkspaceSymbols": true,
+  "python-envs.defaultEnvManager": "ms-python.python:system"
 }

@@ -12,11 +12,12 @@ export default function TypingDots() {
         <div
           key={i}
           style={{
-            width: 7,
-            height: 7,
+            width: 8,
+            height: 8,
             borderRadius: "50%",
-            background: "#059669",
-            animation: `df-bounce 1.2s infinite ${i * 0.2}s`,
+            background: "linear-gradient(135deg,#06b6a4,#047857)",
+            animation: `df-bounce 1.2s infinite ${i * 0.18}s`,
+            boxShadow: "0 6px 14px rgba(4,120,87,0.12)",
           }}
         />
       ))}

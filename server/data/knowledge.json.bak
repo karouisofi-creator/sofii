@@ -1,0 +1,236 @@
+{
+  "name": "sof.xlsx",
+  "columns": [
+    "Catégorie",
+    "Soins",
+    "ICD à utiliser",
+    "__EMPTY",
+    "__EMPTY_1",
+    "__EMPTY_2",
+    "__EMPTY_3"
+  ],
+  "rows": [
+    {
+      "Catégorie": "Dentaire",
+      "Soins": "Tous type de soin dentaires / consultation dentiste",
+      "ICD à utiliser": "K029 / K088",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null
+    },
+    {
+      "Catégorie": "Optique",
+      "Soins": "Réfraction/ Achat des lunettes",
+      "ICD à utiliser": "H542 /H526/H529",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null
+    },
+    {
+      "Catégorie": null,
+      "Soins": "OCT, champ visuel, fond d’œil …",
+      "ICD à utiliser": "H579 / H409",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Pharmacie (collyres)",
+      "ICD à utiliser": "H109 / H409",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": " "
+    },
+    {
+      "Catégorie": null,
+      "Soins": "En cas de chirurgie cataracte",
+      "ICD à utiliser": "H269",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": " ",
+      "__EMPTY_3": null
+    },
+    {
+      "Catégorie": "Imagerie médicale\r\n(Rx, CT Scan, MRI, Echo …)",
+      "Soins": "Imagerie thorax",
+      "ICD à utiliser": "R079",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Imagerie vasculaire",
+      "ICD à utiliser": "I809 /I289",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Imagerie cérébral",
+      "ICD à utiliser": "R51",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Imagerie rachis et cervicalgie",
+      "ICD à utiliser": "M545 / M542",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Imagerie bras/jambe/genou/épaule",
+      "ICD à utiliser": "M255",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Imagerie abdominale et pelvienne",
+      "ICD à utiliser": "R109 / R102",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Imagerie du sein (Mamographie)",
+      "ICD à utiliser": "N649 ou C509 en cas de cancer",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Coloscopie / Endoscopie ",
+      "ICD à utiliser": "K635 / K219 ou K297",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null
+    },
+    {
+      "Catégorie": "Paramedical",
+      "Soins": "Physiothérapie / chriopracter / Acupuncture / Ostéopathie\r\n",
+      "ICD à utiliser": "M255, M545 ou M542",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Orthophoniste",
+      "ICD à utiliser": "F809",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Podologie - Pédicurie médicale",
+      "ICD à utiliser": "L600 / B351",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null
+    },
+    {
+      "Catégorie": "Divers",
+      "Soins": "Dialyse",
+      "ICD à utiliser": "N189",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Troubles psychiatriques",
+      "ICD à utiliser": "F329  / F419 / F209",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Soins auditifs",
+      "ICD à utiliser": "H609 / H939 / H919 (pour les appareils auditifs)",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Neurologie",
+      "ICD à utiliser": "G988",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Dermatologie",
+      "ICD à utiliser": "L309 / L989",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Apnée de sommeil",
+      "ICD à utiliser": "G479",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null
+    },
+    {
+      "Catégorie": "Endocrinologie",
+      "Soins": "Consultation endocrinologue",
+      "ICD à utiliser": "E119 / E039 / E785",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Catégorie": "Examens laboratoire",
+      "Soins": "Bilan lipidique",
+      "ICD à utiliser": "E785",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Catégorie": "Pédiatrie",
+      "Soins": "Consultation pédiatrique",
+      "ICD à utiliser": "R509 / B349",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Catégorie": "Pédiatrie",
+      "Soins": "Bilan pédiatrique",
+      "ICD à utiliser": "J06 / R509",
+      "Sheet": "SOINS MAJ"
+    }
+  ]
+}

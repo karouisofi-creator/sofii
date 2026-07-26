@@ -1,6 +1,5 @@
-import { Outlet } from 'react-router-dom'
-import Sidebar from './Sidebar'
-import ChatbotWidget from '../Chatbot/ChatbotWidget'
+import { Outlet } from "react-router-dom";
+import Sidebar from "./Sidebar";
 
 export default function AppLayout() {
   return (
@@ -9,7 +8,6 @@ export default function AppLayout() {
       <main className="flex-1 overflow-auto relative">
         <Outlet />
       </main>
-      <ChatbotWidget />
     </div>
-  )
+  );
 }

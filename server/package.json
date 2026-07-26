@@ -4,7 +4,10 @@
   "type": "module",
   "scripts": {
     "dev": "node --watch index.js",
-    "start": "node index.js"
+    "start": "node index.js",
+    "import-sof": "node scripts/import-sof-to-medicaments.js sof.xlsx",
+    "import-sof-sql": "node scripts/import-sof-sql.js sof.xlsx",
+    "import-medications": "node scripts/import-medications-to-sql.js data/knowledge.csv"
   },
   "dependencies": {
     "@ai-sdk/groq": "^3.0.31",
@@ -22,6 +25,7 @@
     "jsonwebtoken": "^9.0.2",
     "msnodesqlv8": "^5.1.9",
     "mssql": "^11.0.1",
-    "odbc": "^2.5.0"
+    "odbc": "^2.5.0",
+    "xlsx": "^0.18.5"
   }
 }

@@ -158,10 +158,18 @@ async function proxyToPython(req, res) {
   try {
     const fetchImpl = globalThis.fetch || (await import("node-fetch")).default;
     const upstreamUrl = `${PY_API_BASE}${req.originalUrl}`;
+
+    // Add a 3-second timeout
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+
     const upstreamRes = await fetchImpl(upstreamUrl, {
       method: "GET",
       headers: { Accept: "application/json" },
+      signal: controller.signal,
     });
+
+    clearTimeout(timeout);
 
     if (!upstreamRes.ok) {
       throw new Error(`Upstream ${upstreamRes.status}`);
@@ -208,32 +216,30 @@ router.get("/dashboard", async (req, res) => {
 
   // Try to query DB for KPI; if DB unavailable return default empty KPI payload
   try {
-    const totalR = await tryQuerySafe(
-      "SELECT COUNT(*) AS total FROM dbo.claims_closed",
-      {},
-      [{ total: 0 }],
-    );
-    const terminesR = await tryQuerySafe(
-      "SELECT COUNT(*) AS termines FROM dbo.claims_closed WHERE Code_Etat = 'TE' OR source_file LIKE '%termines%'",
+    const totalTerminesR = await tryQuerySafe(
+      "SELECT COUNT(*) AS termines FROM dbo.sinistres_termines_ligne",
       {},
       [{ termines: 0 }],
     );
-    const byCentreR = await tryQuerySafe(
-      "SELECT ISNULL(site_gestion_theo, 'UNKNOWN') AS centre, COUNT(*) AS total FROM dbo.claims_closed GROUP BY ISNULL(site_gestion_theo, 'UNKNOWN') ORDER BY total DESC",
+    const totalNonTeR = await tryQuerySafe(
+      "SELECT COUNT(*) AS non_te FROM dbo.sinistre_Ter_Lignes_NO_TE",
       {},
-      [],
+      [{ non_te: 0 }],
     );
 
-    const total = (totalR && totalR[0] && totalR[0].total) || 0;
-    const termines = (terminesR && terminesR[0] && terminesR[0].termines) || 0;
+    const termines =
+      (totalTerminesR && totalTerminesR[0] && totalTerminesR[0].termines) || 0;
+    const enCours =
+      (totalNonTeR && totalNonTeR[0] && totalNonTeR[0].non_te) || 0;
+    const total = termines + enCours;
 
     res.json({
       sinistres: {
         total,
         termines,
-        en_cours: Math.max(0, total - termines),
+        en_cours: enCours,
       },
-      parCentre: byCentreR || [],
+      parCentre: [],
     });
   } catch (err) {
     console.error("[data] unexpected dashboard error", err);
@@ -282,14 +288,19 @@ router.get("/teams", async (req, res) => {
 
 // Recent claims
 router.get("/sinistres", async (req, res) => {
-  if (await proxyToPython(req, res)) return;
+  // Skip proxy for now - directly use SQL
+  // if (await proxyToPython(req, res)) return;
 
   try {
     const limit = Number(req.query.limit) || 200;
     const result = await query(
-      `SELECT TOP(${limit}) * FROM dbo.claims_closed ORDER BY date_cloture DESC`,
+      `SELECT TOP(${limit}) * FROM dbo.sinistre_Ter_Lignes_NO_TE ORDER BY ID_Sinistre DESC`,
     );
-    res.json(safeRecordset(result));
+    const rows = safeRecordset(result);
+    console.log(
+      `[/sinistres] Returned ${rows.length} rows (non-terminated lines)`,
+    );
+    res.json(rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "DB error" });
@@ -303,9 +314,13 @@ router.get("/sinistres-termines", async (req, res) => {
   try {
     const limit = Number(req.query.limit) || 200;
     const result = await query(
-      `SELECT TOP(${limit}) * FROM dbo.claims_closed WHERE Code_Etat = 'TE' OR source_file LIKE '%termines%' ORDER BY date_cloture DESC`,
+      `SELECT TOP(${limit}) * FROM dbo.sinistres_termines_ligne ORDER BY ID_Sinistre DESC`,
     );
-    res.json(safeRecordset(result));
+    const rows = safeRecordset(result);
+    console.log(
+      `[/sinistres-termines] Returned ${rows.length} rows (terminated lines)`,
+    );
+    res.json(rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "DB error" });

@@ -1,0 +1,1014 @@
+{
+  "name": "sof.xlsx",
+  "columns": [
+    "Catégorie",
+    "Soins",
+    "ICD à utiliser",
+    "__EMPTY",
+    "__EMPTY_1",
+    "__EMPTY_2",
+    "__EMPTY_3",
+    "Sheet",
+    "Spécialité",
+    "Soin / Acte",
+    "Maladie chronique",
+    "Exemples de médicaments (courants)",
+    "ICD-10"
+  ],
+  "rows": [
+    {
+      "Catégorie": "Dentaire",
+      "Soins": "Tous type de soin dentaires / consultation dentiste",
+      "ICD à utiliser": "K029 / K088",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null,
+      "Sheet": "General ICD"
+    },
+    {
+      "Catégorie": "Optique",
+      "Soins": "Réfraction/ Achat des lunettes",
+      "ICD à utiliser": "H542 /H526/H529",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null,
+      "Sheet": "General ICD"
+    },
+    {
+      "Catégorie": null,
+      "Soins": "OCT, champ visuel, fond d’œil …",
+      "ICD à utiliser": "H579 / H409",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null,
+      "Sheet": "General ICD"
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Pharmacie (collyres)",
+      "ICD à utiliser": "H109 / H409",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": " ",
+      "Sheet": "General ICD"
+    },
+    {
+      "Catégorie": null,
+      "Soins": "En cas de chirurgie cataracte",
+      "ICD à utiliser": "H269",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": " ",
+      "__EMPTY_3": null,
+      "Sheet": "General ICD"
+    },
+    {
+      "Catégorie": "Imagerie médicale\r\n(Rx, CT Scan, MRI, Echo …)",
+      "Soins": "Imagerie thorax",
+      "ICD à utiliser": "R079",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null,
+      "Sheet": "General ICD"
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Imagerie vasculaire",
+      "ICD à utiliser": "I809 /I289",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null,
+      "Sheet": "General ICD"
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Imagerie cérébral",
+      "ICD à utiliser": "R51",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null,
+      "Sheet": "General ICD"
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Imagerie rachis et cervicalgie",
+      "ICD à utiliser": "M545 / M542",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null,
+      "Sheet": "General ICD"
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Imagerie bras/jambe/genou/épaule",
+      "ICD à utiliser": "M255",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null,
+      "Sheet": "General ICD"
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Imagerie abdominale et pelvienne",
+      "ICD à utiliser": "R109 / R102",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null,
+      "Sheet": "General ICD"
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Imagerie du sein (Mamographie)",
+      "ICD à utiliser": "N649 ou C509 en cas de cancer",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null,
+      "Sheet": "General ICD"
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Coloscopie / Endoscopie ",
+      "ICD à utiliser": "K635 / K219 ou K297",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null,
+      "Sheet": "General ICD"
+    },
+    {
+      "Catégorie": "Paramedical",
+      "Soins": "Physiothérapie / chriopracter / Acupuncture / Ostéopathie\r\n",
+      "ICD à utiliser": "M255, M545 ou M542",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null,
+      "Sheet": "General ICD"
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Orthophoniste",
+      "ICD à utiliser": "F809",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null,
+      "Sheet": "General ICD"
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Podologie - Pédicurie médicale",
+      "ICD à utiliser": "L600 / B351",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null,
+      "Sheet": "General ICD"
+    },
+    {
+      "Catégorie": "Divers",
+      "Soins": "Dialyse",
+      "ICD à utiliser": "N189",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null,
+      "Sheet": "General ICD"
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Troubles psychiatriques",
+      "ICD à utiliser": "F329  / F419 / F209",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null,
+      "Sheet": "General ICD"
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Soins auditifs",
+      "ICD à utiliser": "H609 / H939 / H919 (pour les appareils auditifs)",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null,
+      "Sheet": "General ICD"
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Neurologie",
+      "ICD à utiliser": "G988",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null,
+      "Sheet": "General ICD"
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Dermatologie",
+      "ICD à utiliser": "L309 / L989",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null,
+      "Sheet": "General ICD"
+    },
+    {
+      "Catégorie": null,
+      "Soins": "Apnée de sommeil",
+      "ICD à utiliser": "G479",
+      "__EMPTY": null,
+      "__EMPTY_1": null,
+      "__EMPTY_2": null,
+      "__EMPTY_3": null,
+      "Sheet": "General ICD"
+    },
+    {
+      "Spécialité": "Dentaire",
+      "Soin / Acte": "Consultation dentiste et soins dentaires ( (extraction / détartrage / traitement de la carie / endodontie …)",
+      "ICD à utiliser": "K029 / K088 ",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Optique",
+      "Soin / Acte": "Réfraction / achat lunettes",
+      "ICD à utiliser": "H542 / H526/ H521",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "OCT / champ visuel / fond d’œil",
+      "ICD à utiliser": "H409 / H579",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Collyres / traitement ophtalmique",
+      "ICD à utiliser": "H109 / H579",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Chirurgie cataracte",
+      "ICD à utiliser": "H269 ",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Cardiologie",
+      "Soin / Acte": "Consultation cardiologue",
+      "ICD à utiliser": "I10 / R002 / I509",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "ECG",
+      "ICD à utiliser": "R074 / I20",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Échographie cardiaque",
+      "ICD à utiliser": "I509 / I11",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Holter / Stress test ",
+      "ICD à utiliser": "R002 / I49",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "ORL",
+      "Soin / Acte": "Consultation ORL",
+      "ICD à utiliser": "J329 / H609 / J309",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Audiogramme",
+      "ICD à utiliser": "H919 / H900",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Nettoyage d'oreille ",
+      "ICD à utiliser": "H612",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Fibroscopie ORL",
+      "ICD à utiliser": "R42 / H819",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Gastro-entérologie",
+      "Soin / Acte": "Consultation gastro-entérologue",
+      "ICD à utiliser": "K219 / K297 / K590 / R197",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Endoscopie digestive",
+      "ICD à utiliser": "K219 / K297",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Coloscopie",
+      "ICD à utiliser": "K635 / R197",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Échographie abdominale",
+      "ICD à utiliser": "R104 / R102",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Gynécologie",
+      "Soin / Acte": "Consultation gynécologique",
+      "ICD à utiliser": "N94 / N95",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Échographie pelvienne",
+      "ICD à utiliser": "R102 / N832",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Frottis",
+      "ICD à utiliser": "R867",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Mammographie",
+      "ICD à utiliser": "N649 / C509",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Urologie",
+      "Soin / Acte": "Consultation urologue",
+      "ICD à utiliser": "N390 / R31",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "ECBU / analyse urinaire",
+      "ICD à utiliser": "N390 / N30",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Scanner rénal",
+      "ICD à utiliser": "N200 / N23",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Échographie prostatique",
+      "ICD à utiliser": "N40 / C61",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Endocrinologie",
+      "Soin / Acte": "Consultation endocrinologue",
+      "ICD à utiliser": "E119 / E039 / E785",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Bilan hormonal",
+      "ICD à utiliser": "E349",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Bilan diabète / HbA1c",
+      "ICD à utiliser": "E119",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Bilan thyroïdien",
+      "ICD à utiliser": "E039",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Rhumatologie",
+      "Soin / Acte": "Consultation rhumatologue",
+      "ICD à utiliser": "M199 / M545 / M542",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Infiltration articulaire",
+      "ICD à utiliser": "M255",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "IRM rachis / articulations",
+      "ICD à utiliser": "M545 / M542 / M255",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Dermatologie",
+      "Soin / Acte": "Consultation dermatologue",
+      "ICD à utiliser": "L709 / L309 / L409",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Biopsie cutanée",
+      "ICD à utiliser": "L989",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Traitement dermatologique",
+      "ICD à utiliser": "L50 / T784",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Allergologie",
+      "Soin / Acte": "Consultation allergologue",
+      "ICD à utiliser": "J309 / T784",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Tests allergiques",
+      "ICD à utiliser": "T784 / L50",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Pneumologie",
+      "Soin / Acte": "Consultation pneumologue",
+      "ICD à utiliser": "J459 / J40 / R05",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Radio thorax",
+      "ICD à utiliser": "R079 / J18",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Exploration fonctionnelle respiratoire",
+      "ICD à utiliser": "J459 / J46",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Test sommeil",
+      "ICD à utiliser": "G473 / G47",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Neurologie",
+      "Soin / Acte": "Consultation neurologue",
+      "ICD à utiliser": "G439 / G409 / R51",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "EEG",
+      "ICD à utiliser": "G409 / R56",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "IRM cérébrale",
+      "ICD à utiliser": "R51 / G43",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Psychiatrie",
+      "Soin / Acte": "Consultation psychiatre",
+      "ICD à utiliser": "F419 / F329",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Consultation psychologue",
+      "ICD à utiliser": "F419 / F51",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Thérapie comportementale",
+      "ICD à utiliser": "F329 / F339",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Paramédical",
+      "Soin / Acte": "Physiothérapie",
+      "ICD à utiliser": "M545 / M542",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Chiropractie / ostéopathie",
+      "ICD à utiliser": "M542 / M509",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Kinésithérapie",
+      "ICD à utiliser": "M255 / M190",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Orthophonie",
+      "ICD à utiliser": "F809 ",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Podologie / pédicurie médicale",
+      "ICD à utiliser": "L600 / B351",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Imagerie médicale     (Rx, CT Scan, MRI, Echo …)",
+      "Soin / Acte": "Imagerie thorax",
+      "ICD à utiliser": "R079 / I20",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Imagerie cérébrale",
+      "ICD à utiliser": "R51 / G43",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Imagerie rachis cervical/lombaire",
+      "ICD à utiliser": "M542 / M545",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Imagerie abdominale/pelvienne",
+      "ICD à utiliser": "R109 / R102",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Imagerie Doppler / imagerie vasculaire",
+      "ICD à utiliser": "I809 / I289",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Imagerie IRM membre supérieur/inférieur",
+      "ICD à utiliser": "M255 / M19",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Examens laboratoire",
+      "Soin / Acte": "Bilan sanguin général",
+      "ICD à utiliser": "R53 / D649",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Glycémie / HbA1c",
+      "ICD à utiliser": "E119",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Bilan lipidique",
+      "ICD à utiliser": "E785",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Bilan thyroïdien",
+      "ICD à utiliser": "E039",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Analyse d’urines",
+      "ICD à utiliser": "N390",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Prévention",
+      "Soin / Acte": "Vaccination",
+      "ICD à utiliser": "Z23/ B349",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Pédiatrie",
+      "Soin / Acte": "Consultation pédiatrique",
+      "ICD à utiliser": "R509 / B349",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Bilan pédiatrique",
+      "ICD à utiliser": "J06 / R509",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Oncologie",
+      "Soin / Acte": "Consultation oncologue",
+      "ICD à utiliser": "C801",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Chimiothérapie",
+      "ICD à utiliser": "C801",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Mammographie oncologique",
+      "ICD à utiliser": "C509",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Biopsie / suivi cancer",
+      "ICD à utiliser": "C801",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Néphrologie",
+      "Soin / Acte": "Consultation néphrologue",
+      "ICD à utiliser": "N189 / N19",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Dialyse",
+      "ICD à utiliser": "N189 / N19",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Bilan rénal",
+      "ICD à utiliser": "N17 / N18",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Hématologie",
+      "Soin / Acte": "Consultation hématologue",
+      "ICD à utiliser": "D64 / D50",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Numération formule sanguine",
+      "ICD à utiliser": "D64 / D72",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Bilan anémie",
+      "ICD à utiliser": "D50 / D64",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Médecine interne",
+      "Soin / Acte": "Consultation médecine interne",
+      "ICD à utiliser": "R53 / R50",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Bilan maladie auto-immune",
+      "ICD à utiliser": "M35 / D89",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Infectiologie",
+      "Soin / Acte": "Consultation infectiologue",
+      "ICD à utiliser": "B349 / A49",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Bilan infectieux",
+      "ICD à utiliser": "A49 / R50",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Nutrition / Diététique",
+      "Soin / Acte": "Consultation diététicienne",
+      "ICD à utiliser": "E66 / E785",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Suivi nutritionnel",
+      "ICD à utiliser": "E639 / E66",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Médecine physique et réadaptation",
+      "Soin / Acte": "Rééducation fonctionnelle",
+      "ICD à utiliser": "M545 / M255",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Réadaptation motrice",
+      "ICD à utiliser": "G81 / M62",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Chirurgie générale",
+      "Soin / Acte": "Consultation chirurgie générale",
+      "ICD à utiliser": "K40 / K80",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Petite chirurgie",
+      "ICD à utiliser": "T149 / L98",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Exérèse kyste / lipome",
+      "ICD à utiliser": "L72 / D17",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Chirurgie orthopédique",
+      "Soin / Acte": "Consultation orthopédique",
+      "ICD à utiliser": "M17 / M19",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Pose plâtre / immobilisation",
+      "ICD à utiliser": "S82 / S52",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Infiltration orthopédique",
+      "ICD à utiliser": "M255",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Chirurgie vasculaire",
+      "Soin / Acte": "Consultation vasculaire",
+      "ICD à utiliser": "I83 / I80",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Doppler veineux / artériel",
+      "ICD à utiliser": "I809 / I73",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Fertilité / PMA",
+      "Soin / Acte": "Consultation fertilité",
+      "ICD à utiliser": "N97 / E28",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Bilan infertilité",
+      "ICD à utiliser": "N97",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Soins à domicile",
+      "Soin / Acte": "Soins infirmiers",
+      "ICD à utiliser": "R53 / N390",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Pansement / injection",
+      "ICD à utiliser": "T149 / L89",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Gériatrie",
+      "Soin / Acte": "Consultation gériatrique",
+      "ICD à utiliser": "R54 / F03",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Bilan autonomie",
+      "ICD à utiliser": "R26 / M62",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Médecine générale",
+      "Soin / Acte": "Consultation médecin généraliste",
+      "ICD à utiliser": "R53 / R50 / R52",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": null,
+      "Soin / Acte": "Certificat médical",
+      "ICD à utiliser": "R53",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Radiothérapie",
+      "Soin / Acte": "Séance radiothérapie",
+      "ICD à utiliser": "C509 / C61 / C801",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Spécialité": "Réanimation",
+      "Soin / Acte": "Hospitalisation soins intensifs",
+      "ICD à utiliser": "J96 / I46",
+      "Sheet": "SOINS MAJ"
+    },
+    {
+      "Maladie chronique": "Diabète type 2",
+      "Exemples de médicaments (courants)": "Metformine, Gliclazide, Glucophage",
+      "ICD-10": "E119",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "Diabète type 1",
+      "Exemples de médicaments (courants)": "Insuline rapide, Insuline basale",
+      "ICD-10": "E109",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "Hypertension artérielle",
+      "Exemples de médicaments (courants)": "Amlodipine, Ramipril, Losartan",
+      "ICD-10": "I10",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "Dyslipidémie",
+      "Exemples de médicaments (courants)": "Atorvastatine, Rosuvastatine, Simvastatine",
+      "ICD-10": "E785",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "Asthme chronique",
+      "Exemples de médicaments (courants)": "Salbutamol, Budésonide, Formotérol",
+      "ICD-10": "J45",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "BPCO",
+      "Exemples de médicaments (courants)": "Tiotropium, Salbutamol, Budésonide/Formotérol",
+      "ICD-10": "J44",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "Insuffisance cardiaque chronique",
+      "Exemples de médicaments (courants)": "Bisoprolol, Ramipril, Furosémide",
+      "ICD-10": "I50",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "Cardiopathie ischémique",
+      "Exemples de médicaments (courants)": "Aspirine, Clopidogrel, Atorvastatine",
+      "ICD-10": "I25",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "Fibrillation auriculaire",
+      "Exemples de médicaments (courants)": "Apixaban, Warfarine, Bisoprolol",
+      "ICD-10": "I48",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "Maladie rénale chronique",
+      "Exemples de médicaments (courants)": "Époétine alfa, Sevelamer, Furosémide",
+      "ICD-10": "N18",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "Arthrose",
+      "Exemples de médicaments (courants)": "Paracétamol, Ibuprofène, Diclofénac",
+      "ICD-10": "M19",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "Polyarthrite rhumatoïde",
+      "Exemples de médicaments (courants)": "Méthotrexate, Adalimumab, Prednisone",
+      "ICD-10": "M06",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "Ostéoporose",
+      "Exemples de médicaments (courants)": "Alendronate, Calcium + Vitamine D, Denosumab",
+      "ICD-10": "M81",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "Hypothyroïdie",
+      "Exemples de médicaments (courants)": "Lévothyroxine",
+      "ICD-10": "E03",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "Hyperthyroïdie (Graves)",
+      "Exemples de médicaments (courants)": "Carbimazole, Propylthiouracile",
+      "ICD-10": "E05",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "Épilepsie",
+      "Exemples de médicaments (courants)": "Valproate, Levetiracétam, Carbamazépine",
+      "ICD-10": "G40",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "Migraine chronique",
+      "Exemples de médicaments (courants)": "Sumatriptan, Propranolol, Topiramate",
+      "ICD-10": "G43",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "Hépatite chronique B",
+      "Exemples de médicaments (courants)": "Tenofovir, Entecavir, Lamivudine",
+      "ICD-10": "B18",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "Dépression chronique",
+      "Exemples de médicaments (courants)": "Sertraline, Fluoxétine, Escitalopram",
+      "ICD-10": "F33",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "Trouble bipolaire",
+      "Exemples de médicaments (courants)": "Lithium, Quétiapine, Valproate",
+      "ICD-10": "F31",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "Schizophrénie",
+      "Exemples de médicaments (courants)": "Olanzapine, Rispéridone, Clozapine",
+      "ICD-10": "F20",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "Maladie de Parkinson",
+      "Exemples de médicaments (courants)": "Lévodopa, Pramipexole, Rasagiline",
+      "ICD-10": "G20",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "Alzheimer",
+      "Exemples de médicaments (courants)": "Donepezil, Mémantine, Rivastigmine",
+      "ICD-10": "G30",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "Sclérose en plaques",
+      "Exemples de médicaments (courants)": "Interféron bêta, Fingolimod, Ocrelizumab",
+      "ICD-10": "G35",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "Lupus érythémateux systémique",
+      "Exemples de médicaments (courants)": "Hydroxychloroquine, Prednisone, Azathioprine",
+      "ICD-10": "M32",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "Goutte chronique",
+      "Exemples de médicaments (courants)": "Allopurinol, Colchicine, Fébuxostat",
+      "ICD-10": "M10",
+      "Sheet": "Maladie Chronique"
+    },
+    {
+      "Maladie chronique": "Psoriasis chronique",
+      "Exemples de médicaments (courants)": "Méthotrexate, Ustékinumab, Acitrétine",
+      "ICD-10": "L40",
+      "Sheet": "Maladie Chronique"
+    }
+  ]
+}

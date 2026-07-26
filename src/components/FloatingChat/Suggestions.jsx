@@ -1,32 +1,65 @@
-const SUGGESTIONS = [
-  "💊 Doliprane remboursé ?",
-  "📊 Batch pour CFE ?",
-  "📋 Créer un reporting",
-  "📤 Exporter en Excel",
+import { useEffect, useState } from "react";
+
+// Suggestions will be loaded from the server categories endpoint
+// Fallback to a small default list if the API is unavailable
+const DEFAULT_SUGGESTIONS = [
+  "Cardiologie",
+  "Optique",
+  "Dentaire",
+  "ORL",
+  "Imagerie médicale",
 ];
 
-export default function Suggestions({ setInput }) {
+export default function Suggestions({ setInput, sendMessage }) {
+  const [suggestions, setSuggestions] = useState(DEFAULT_SUGGESTIONS);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch("/api/chat/knowledge-base/categories");
+        if (!res.ok) throw new Error("no categories");
+        const data = await res.json();
+        if (
+          mounted &&
+          data &&
+          Array.isArray(data.categories) &&
+          data.categories.length
+        ) {
+          setSuggestions(data.categories.slice(0, 24));
+        }
+      } catch (e) {
+        // keep defaults
+      }
+    })();
+    return () => (mounted = false);
+  }, []);
+
   return (
     <div
       style={{
-        padding: "6px 12px 8px",
+        padding: "10px 12px",
         display: "flex",
-        gap: 6,
+        gap: 8,
         flexWrap: "wrap",
-        borderTop: "1px solid rgba(110,231,183,0.08)",
+        borderTop: "1px solid rgba(2,6,23,0.06)",
+        background: "transparent",
       }}
     >
-      {SUGGESTIONS.map((s, i) => (
+      {suggestions.map((s, i) => (
         <button
           key={i}
-          onClick={() => setInput(s)}
+          onClick={() => {
+            setInput(s);
+            if (typeof sendMessage === "function") sendMessage(s);
+          }}
           style={{
-            background: "rgba(5,150,105,0.1)",
-            border: "1px solid rgba(110,231,183,0.2)",
+            background: "#eef2ff",
+            border: "1px solid rgba(99,102,241,0.12)",
             borderRadius: 20,
-            color: "#a7f3d0",
-            padding: "4px 10px",
-            fontSize: 11,
+            color: "#3730a3",
+            padding: "6px 12px",
+            fontSize: 13,
             cursor: "pointer",
           }}
         >

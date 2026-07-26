@@ -8,7 +8,7 @@ export default function FloatingChatButton() {
     {
       role: "assistant",
       content:
-        "Bonjour ! 👋 Comment puis-je vous aider avec DataFlow Assurance ?",
+        "Posez votre question sur les codes ICD ou les soins, je réponds à partir de la base intégrée.",
     },
   ]);
   const [input, setInput] = useState("");
@@ -36,6 +36,7 @@ export default function FloatingChatButton() {
           messagesEndRef={messagesEndRef}
           inputRef={inputRef}
           setUnread={setUnread}
+          setOpen={setOpen}
         />
       )}
     </div>
